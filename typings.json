@@ -1,0 +1,9 @@
+{
+  "name": "toberCharts",
+  "version": false,
+  "dependencies": {},
+  "ambientDependencies": {
+    "d3": "registry:dt/d3#0.0.0+20160317120654",
+    "lodash": "registry:dt/lodash#3.10.0+20160319050323"
+  }
+}

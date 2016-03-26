@@ -1,0 +1,118 @@
+/* Do not remove the comments below. It's the markers used by wiredep to inject
+   sass dependencies when defined in the bower.json of your dependencies */
+// bower:scss
+// endbower
+
+$text-primary: #2c3e50;
+$text-secondary: #34495e;
+$axes-lines: #95a5a6;
+
+$swatch-0: #2980b9;
+$swatch-1: #27ae60;
+$swatch-2: #e74c3c;
+$swatch-3: #9b59b6;
+$swatch-4: #1cccaa;
+$swatch-5: #f39c12;
+
+
+body {
+  background-color: #f6f6f6;
+  padding: 20px;
+}
+
+.some-container {
+  width: 450px;
+  margin: 0 auto;
+  height: 250px;
+}
+
+svg.plot {
+
+  font-size: 12px;
+
+  width: 100%;
+  height: 100%;
+  background-color: #eaeaea;
+
+  .plot-area {
+    background-color: red;
+  }
+
+  text {
+    fill: $text-primary;
+    font-family: Helvetica;
+    font-weight: bold;
+    text-anchor: middle;
+  }
+
+  .title {
+    font-size: 12px;
+  }
+
+  .axis {
+
+    // Axis labels.
+    text {
+      font-weight: normal;
+    }
+
+    // Axis line.
+    path {
+      fill: none;
+      stroke: $axes-lines;
+      stroke-width: 1px;
+      shape-rendering: crispEdges;
+    }
+
+    // Tick marks.
+    .tick line {
+      fill: none;
+      stroke: $axes-lines;
+      stroke-width: 1px;
+      shape-rendering: crispEdges;
+    }
+
+  }
+
+  .layer-points {
+
+    circle {
+      stroke: $text-primary;
+      stroke-width: 0;
+    }
+
+  }
+
+  .layer-lines {
+    path {
+      fill: none;
+    }
+  }
+
+  .layer-text {
+    text {
+      text-anchor: middle;
+      alignment-baseline: middle;
+    }
+  }
+
+  .fill-0 { fill: $swatch-0; }
+  .fill-1 { fill: $swatch-1; }
+  .fill-2 { fill: $swatch-2; }
+  .fill-3 { fill: $swatch-3; }
+  .fill-4 { fill: $swatch-4; }
+  .fill-5 { fill: $swatch-5; }
+
+  .stroke-0 { stroke: $swatch-0; }
+  .stroke-1 { stroke: $swatch-1; }
+  .stroke-2 { stroke: $swatch-2; }
+  .stroke-3 { stroke: $swatch-3; }
+  .stroke-4 { stroke: $swatch-4; }
+  .stroke-5 { stroke: $swatch-5; }
+
+}
+
+/* Do not remove the comments below. It's the markers used by gulp-inject to inject
+   all your sass files automatically */
+// injector
+// endinjector
