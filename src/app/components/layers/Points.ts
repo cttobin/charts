@@ -36,23 +36,33 @@ export class PointLayer extends Layer {
     let chart = this.chart;
     const mappings = chart._mappings;
 
-    chart._plotArea
+    let points = chart._plotArea
       .append('g')
       .attr('class', this.className)
       .selectAll('.datum-points')
       .data(chart._data.rows)
       .enter()
       .append('circle')
-      .attr({
-        'r': parameterScales.size,
-        'cx': (datum: any) => chart._scales.x(datum[mappings.x.name]),
-        'cy': (datum: any) => chart._scales.y(datum[mappings.y.name])
-      })
       .style({
         'fill': parameterScales.fill,
         'stroke': parameterScales.stroke,
         'opacity': parameterScales.opacity
+      })
+      .attr({
+        'r': parameterScales.size,
+        'cx': (datum: any) => chart._scales.x(datum[mappings.x.name])
       });
+
+    if (chart.isAnimated()) {
+      const animation = chart._animation;
+      points = points.attr('cy', () => chart._scales.y(0))
+        .transition()
+        .duration(animation.duration)
+        .ease(animation.easing)
+        .delay(animation.delay);
+    }
+
+    points.attr('cy', (datum: any) => chart._scales.y(datum[mappings.y.name]));
 
   }
 

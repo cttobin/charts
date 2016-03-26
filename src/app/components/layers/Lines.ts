@@ -48,6 +48,11 @@ export class LineLayer extends Layer {
     const parameterScales = super._generateScales(chart._data) as LineParameters;
     const interpolation = 'linear';
 
+    const initialLineFunction = d3.svg.line()
+      .x((datum: any) => chart._scales.x(datum[chart._mappings.x.name]))
+      .y(() => chart._scales.y(0))
+      .interpolate(interpolation);
+
     const lineFunction = d3.svg.line()
       .x((datum: any) => chart._scales.x(datum[chart._mappings.x.name]))
       .y((datum: any) => chart._scales.y(datum[chart._mappings.y.name]))
@@ -88,22 +93,33 @@ export class LineLayer extends Layer {
       lineData = [chart._data.rows];
     }
 
-    chart._plotArea
+    let lines = chart._plotArea
       .append('g')
       .attr('class', this.className)
       .selectAll('.datum-lines')
       .data(lineData)
       .enter()
       .append('path')
-      .attr({
-        'd': lineFunction,
-        'stroke-width': this._onFirstDatum(parameterScales.thickness),
-        'stroke': this._onFirstDatum(parameterScales.stroke)
-      })
       .style({
         'stroke-dasharray': this._onFirstDatum(parameterScales.dash),
         'opacity': this._onFirstDatum(parameterScales.opacity)
+      })
+      .attr({
+        'stroke-width': this._onFirstDatum(parameterScales.thickness),
+        'stroke': this._onFirstDatum(parameterScales.stroke)
       });
+
+    if (chart.isAnimated()) {
+      const animation = chart._animation;
+      lines = lines
+        .attr('d', initialLineFunction)
+        .transition()
+        .duration(animation.duration)
+        .ease(animation.easing)
+        .delay(animation.delay);
+    }
+
+    lines.attr('d', lineFunction);
 
   }
 

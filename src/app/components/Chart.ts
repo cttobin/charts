@@ -41,6 +41,12 @@ interface ChartTicks {
   y: number;
 }
 
+interface AnimationOptions {
+  duration?: number;
+  delay?: number;
+  easing?: string;
+}
+
 
 export class Chart {
 
@@ -51,6 +57,7 @@ export class Chart {
   public _plotAreaHeight: number;
   public _plotAreaWidth: number;
   public _theme: Theme;
+  public _animation: AnimationOptions;
 
   private _ticksFormat: any;
   private _ticks: ChartTicks;
@@ -64,7 +71,6 @@ export class Chart {
   private _xTitleElement: any;
   private _yTitleElement: any;
 
-
   private _height: number;
   private _width: number;
 
@@ -73,11 +79,18 @@ export class Chart {
 
 
 
-  constructor(data: any, mappings: Mappings, chartOptions: ChartOptions) {
+  constructor(data: any, mappings: Mappings, chartOptions?: ChartOptions) {
 
-    let defaultChartOptions = {
+    const defaultChartOptions = {
       titlePadding: 8,
-      axisTitlePadding: 8
+      axisTitlePadding: 8,
+      axisPadding: 12
+    };
+
+    this._animation = {
+      duration: 1250,
+      easing: 'elastic',
+      delay: 0
     };
 
     this._theme = new Theme(['#2980b9', '#27ae60', '#e74c3c', '#9b59b6', '#1cccaa', '#f39c12'], ['#f1c40f', '#f39c12']);
@@ -114,6 +127,16 @@ export class Chart {
     this._scales = {};
     return this;
 
+  }
+
+
+  public animate(options: AnimationOptions): Chart {
+    if (_.isNull(options)) {
+      this._animation = null;
+    } else {
+      this._animation = _.assign(this._animation, options);
+    }
+    return this;
   }
 
   /**
@@ -195,7 +218,7 @@ export class Chart {
 
     if (this._titles.main) {
 
-      let padding = this._chartOptions.titlePadding * 2;
+      const padding = this._chartOptions.titlePadding * 2;
 
       this._titleElement = this._svg
         .append('text')
@@ -205,7 +228,7 @@ export class Chart {
         })
         .text(this._titles.main);
 
-      let titleBox = getBox(this._titleElement);
+      const titleBox = getBox(this._titleElement);
       this._plotAreaHeight -= (titleBox.height + padding);
       this._plotUpperOffset = (titleBox.height + padding);
 
@@ -216,7 +239,7 @@ export class Chart {
   _drawAxesTitles() {
 
     // The total axis title padding is doubled since it will surround the text.
-    let padding = this._chartOptions.axisTitlePadding * 2;
+    const padding = this._chartOptions.axisTitlePadding * 2;
 
     this._xTitleElement = this._svg
       .append('text')
@@ -227,7 +250,7 @@ export class Chart {
       .text(this._titles.x);
 
     // Vertically shrink available plot area.
-    let xTitleBox = getBox(this._xTitleElement);
+    const xTitleBox = getBox(this._xTitleElement);
     this._plotAreaHeight -= (xTitleBox.height + padding);
 
     this._yTitleElement = this._svg
@@ -239,7 +262,7 @@ export class Chart {
       })
       .text(this._titles.y);
 
-    let yTitleBox = getBox(this._yTitleElement);
+    const yTitleBox = getBox(this._yTitleElement);
 
     // After rotation, the height is the width.
     this._plotAreaWidth -= (yTitleBox.height + padding);
@@ -253,15 +276,15 @@ export class Chart {
   _positionTitles() {
 
     // Position to horizontal centre in the middle of the plot area.
-    let centred = this._plotLeftOffset + (this._plotAreaWidth / 2);
+    const centred = this._plotLeftOffset + (this._plotAreaWidth / 2);
 
-    let titleBox = getBox(this._titleElement);
+    const titleBox = getBox(this._titleElement);
     setTransform(this._titleElement, centred, this._chartOptions.titlePadding + (titleBox.height / 2));
 
-    let xTitleBox = getBox(this._xTitleElement);
+    const xTitleBox = getBox(this._xTitleElement);
     setTransform(this._xTitleElement, centred, this._height - (xTitleBox.height / 2) - this._chartOptions.axisTitlePadding);
 
-    let yTitleBox = getBox(this._yTitleElement);
+    const yTitleBox = getBox(this._yTitleElement);
     this._yTitleElement.attr('transform', translate(this._chartOptions.axisTitlePadding + (yTitleBox.height / 2), this._height / 2) + ' rotate(270)');
 
   }
@@ -283,9 +306,9 @@ export class Chart {
    * Render all chart layers.
    * @private
    */
-  _drawLayers():void {
+  _drawLayers(): void {
 
-    _.forEach(this._layers, function (layer:Layer) {
+    _.forEach(this._layers, function (layer: Layer) {
       layer.draw();
     });
 
@@ -299,13 +322,13 @@ export class Chart {
       .domain(d3.extent(this._data.rows, datum => datum[this._mappings.y.name]))
       .range([this._plotAreaHeight, 0]);
 
-    let yAxis = d3.svg.axis()
+    const yAxis = d3.svg.axis()
       .scale(this._scales.y)
       .orient('left')
       .ticks(this._ticks.y)
       .tickFormat(this._ticksFormat.y);
 
-    let yAxisElement = this._svg
+    const yAxisElement = this._svg
       .append('g')
       .attr('class', 'y axis')
       .call(yAxis);
@@ -320,20 +343,20 @@ export class Chart {
       .domain(d3.extent(this._data.rows, datum => datum[this._mappings.x.name]))
       .range([0, this._plotAreaWidth]);
 
-    let xAxis = d3.svg.axis()
+    const xAxis = d3.svg.axis()
       .scale(this._scales.x)
       .orient('bottom')
       .ticks(this._ticks.x)
       .tickFormat(this._ticksFormat.x);
 
     // Add x-axis to chart.
-    let xAxisElement = this._svg
+    const xAxisElement = this._svg
       .append('g')
       .attr('class', 'x axis')
       .call(xAxis);
 
     // Subtract x-axis height and overflow width from allowable area.
-    let xAxisBox = getBox(xAxisElement);
+    const xAxisBox = getBox(xAxisElement);
     this._plotAreaHeight -= xAxisBox.height;
     this._plotAreaWidth -= this._chartOptions.axisTitlePadding + ((xAxisBox.width - this._plotAreaWidth) / 2);
 
@@ -352,7 +375,11 @@ export class Chart {
 
   }
 
-  draw(selector: string):LiveChart {
+  public isAnimated(): boolean {
+    return !_.isNull(this._animation);
+  }
+
+  draw(selector: string): LiveChart {
 
     // Use d3.select() on selector string.
     if (_.isString(selector)) {
@@ -373,7 +400,7 @@ export class Chart {
     }
 
     // Get container dimensions.
-    var containerBox = this._container[0][0].getBoundingClientRect();
+    const containerBox = this._container[0][0].getBoundingClientRect();
     this._height = containerBox.height;
     this._width = containerBox.width;
     this._plotAreaHeight = containerBox.height;

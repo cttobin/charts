@@ -32,32 +32,15 @@ import { Data } from './components/Data';
       y: PlotJS.labels.comma(),
       x: PlotJS.labels.integer()
     })
-    //.lines({
-    //  stroke: department,
-    //  dash: department
-    //})
-    .columns()
-    .points({
-      //fill: department,
-      //size: PlotJS.mapping('department', {
-      //  'A': 10, 'B': 2
-      //})
-      //size: function (datum) {
-      //  if (datum.department === 'A') {
-      //    return 10
-      //  } else {
-      //    return 1;
-      //  }
-      //}
+    .lines({
+      stroke: department,
+      dash: department
     })
-    //.points({
-    //  size: 2.5,
-    //  fill: 'white'
-    //})
-    //.text({fill: data.fields['department']})
+    .points({
+      fill: department
+    })
     .titles({
       main: 'What',
-      x: 'Current Year',
       y: 'Total Sales'
     })
     // .title('Chart Title')
