@@ -15,7 +15,7 @@ export interface PointParameters extends LayerParameters {
 
 export class PointLayer extends Layer {
 
-  private elements: d3.Selection<SVGCircleElement> | d3.Transition<SVGCircleElement>;
+  private elements: any;
 
   constructor(chart: Chart, userParameters: LayerParameters) {
 

@@ -152,13 +152,10 @@ export class Chart {
   public draw(selector: string): LiveChart {
 
     // Use d3.select() on selector string.
-    if (_.isString(selector)) {
-      this._container = d3.select(selector);
-    }
+    this._container = d3.select(selector);
 
-    // Ensure selector was valid.
-    if (_.isUndefined(this._container)) {
-      throw new Error('Selector returned undefined.');
+    if (this._container.empty()) {
+      throw new Error(`No elements found with the selector "${selector}".`)
     }
 
     // Add SVG for plot.
