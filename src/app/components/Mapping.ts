@@ -1,7 +1,3 @@
-import { Data } from './Data';
-import { DataField } from './DataField';
-
-
 export interface Mappings {
   x: Mapping;
   y: Mapping;

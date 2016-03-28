@@ -15,6 +15,8 @@ export interface PointParameters extends LayerParameters {
 
 export class PointLayer extends Layer {
 
+  private elements: d3.Selection<SVGCircleElement> | d3.Transition<SVGCircleElement>;
+
   constructor(chart: Chart, userParameters: LayerParameters) {
 
     const theme = chart._theme;
@@ -30,13 +32,19 @@ export class PointLayer extends Layer {
 
   }
 
-  draw(): void {
+  public remove(): void {
+    //_.forEach(this.points, (point) => point.remove());
+    //this.elements.remove()
+    //this.elements.attr('r', 0);
+  }
+
+  public draw(): void {
 
     let parameterScales: PointParameters = this.parameterScales as PointParameters;
     let chart = this.chart;
     const mappings = chart._mappings;
 
-    let points = chart._plotArea
+    this.elements = chart._plotArea
       .append('g')
       .attr('class', this.className)
       .selectAll('.datum-points')
@@ -48,6 +56,21 @@ export class PointLayer extends Layer {
         'stroke': parameterScales.stroke,
         'opacity': parameterScales.opacity
       })
+      .on('mouseover', (datum: any) => {
+
+        this.tooltip = chart._plotArea
+          .append('circle')
+          .attr({
+            'r': parameterScales.size() + 3,
+            'cx': chart._scales.x(datum[mappings.x.name]),
+            'cy': chart._scales.y(datum[mappings.y.name]),
+            'class': this.tooltipClass
+          });
+
+      })
+      .on('mouseout', () => {
+        this.tooltip.remove();
+      })
       .attr({
         'r': parameterScales.size,
         'cx': (datum: any) => chart._scales.x(datum[mappings.x.name])
@@ -55,14 +78,14 @@ export class PointLayer extends Layer {
 
     if (chart.isAnimated()) {
       const animation = chart._animation;
-      points = points.attr('cy', () => chart._scales.y(0))
+      this.elements = this.elements.attr('cy', () => chart._scales.y(0))
         .transition()
         .duration(animation.duration)
         .ease(animation.easing)
         .delay(animation.delay);
     }
 
-    points.attr('cy', (datum: any) => chart._scales.y(datum[mappings.y.name]));
+    this.elements.attr('cy', (datum: any) => chart._scales.y(datum[mappings.y.name]));
 
   }
 

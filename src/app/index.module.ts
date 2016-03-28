@@ -23,7 +23,7 @@ import { Data } from './components/Data';
 
   const department = PlotJS.mapping('department');
 
-  PlotJS.chart(rawData, {
+  const chart = PlotJS.chart(rawData, {
       x: PlotJS.mapping('year'),
       y: PlotJS.mapping('sales'),
       label: department
@@ -33,18 +33,18 @@ import { Data } from './components/Data';
       x: PlotJS.labels.integer()
     })
     .lines({
-      stroke: department,
-      dash: department
+      stroke: department
     })
-    .points({
-      fill: department
-    })
+    .points({fill: department})
     .titles({
       main: 'What',
       y: 'Total Sales'
     })
+    .animate({delay: 250})
     // .title('Chart Title')
     .draw('.some-container');
+
+  //setTimeout(chart.removeData, 2000);
 
 })();
 

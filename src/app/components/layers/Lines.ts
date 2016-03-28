@@ -46,12 +46,7 @@ export class LineLayer extends Layer {
 
     let chart = this.chart;
     const parameterScales = super._generateScales(chart._data) as LineParameters;
-    const interpolation = 'linear';
-
-    const initialLineFunction = d3.svg.line()
-      .x((datum: any) => chart._scales.x(datum[chart._mappings.x.name]))
-      .y(() => chart._scales.y(0))
-      .interpolate(interpolation);
+    const interpolation = 'cardinal';
 
     const lineFunction = d3.svg.line()
       .x((datum: any) => chart._scales.x(datum[chart._mappings.x.name]))
@@ -110,7 +105,16 @@ export class LineLayer extends Layer {
       });
 
     if (chart.isAnimated()) {
+
+      // Animation settings.
       const animation = chart._animation;
+
+      // Before the animation begins, the line must have a starting position at the bottom of the chart.
+      const initialLineFunction = d3.svg.line()
+        .x((datum: any) => chart._scales.x(datum[chart._mappings.x.name]))
+        .y(() => chart._scales.y(0))
+        .interpolate(interpolation);
+
       lines = lines
         .attr('d', initialLineFunction)
         .transition()

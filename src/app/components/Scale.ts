@@ -10,7 +10,7 @@ export class Scale {
     return this._defaultValue;
   }
 
-  isStatic():boolean {
+  isStatic(): boolean {
     return this instanceof StaticRangeScale;
   }
 
@@ -29,12 +29,12 @@ export class OrdinalRangeScale extends Scale {
 
   }
 
-  public setOrdinalValues(values: any[]) {
-    this._ordinalValues = values;
-  }
-
   public static isValueValid(value: any): boolean {
     return _.isString(value);
+  }
+
+  public setOrdinalValues(values: any[]) {
+    this._ordinalValues = values;
   }
 
   public getOrdinalRange(scale) {
@@ -50,7 +50,7 @@ export class OrdinalRangeScale extends Scale {
 
 export class ContinuousRangeScale extends Scale {
 
-  private _limits:number[];
+  private _limits: number[];
 
   constructor(defaultValue: any, limits: number[]) {
 
@@ -64,7 +64,7 @@ export class ContinuousRangeScale extends Scale {
   }
 
   public setLimits(limits: number[]): void {
-    if (limits.length != 2) {
+    if (limits.length !== 2) {
       throw new Error('Limits for a continuous scale must be of length two.');
     }
     this._limits = limits;

@@ -75,12 +75,10 @@ svg.plot {
   }
 
   .layer-points {
-
     circle {
       stroke: $text-primary;
       stroke-width: 0;
     }
-
   }
 
   .layer-lines {
@@ -94,6 +92,12 @@ svg.plot {
       text-anchor: middle;
       alignment-baseline: middle;
     }
+  }
+
+  .layer-points-tooltip {
+    fill: transparent;
+    stroke: black;
+    stroke-width: 3px;
   }
 
   .fill-0 { fill: $swatch-0; }

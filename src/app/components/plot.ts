@@ -27,10 +27,10 @@ export const PlotJS = {
 
   labels: {
     comma: function () {
-      return d3.format(',')
+      return d3.format(',');
     },
     integer: function () {
-      return d3.format('d')
+      return d3.format('d');
     },
     currency: function (currencySymbol?: string) {
       return d3.format('$,');

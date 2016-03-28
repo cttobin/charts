@@ -1,7 +1,6 @@
 import { Chart } from './../Chart';
 import { LayerParameters } from './../LayerParameters';
 import { Data } from './../Data';
-import { isDataField } from './../DataField';
 import { orList } from './../quotedList';
 import { StaticRangeScale } from './../Scale';
 import { Mapping } from './../Mapping';
@@ -9,8 +8,10 @@ import { Mapping } from './../Mapping';
 
 export class Layer {
 
-  protected className:string;
-  protected parameterScales:LayerParameters;
+  protected className: string;
+  protected parameterScales: LayerParameters;
+  protected tooltip: SVGElement;
+  protected tooltipClass: string;
 
   constructor(protected name: string,
               protected chart: Chart,
@@ -20,6 +21,8 @@ export class Layer {
     // The class to apply to the layer when its drawn. Used for CSS styling.
     this.className = 'layer-' + name;
     this.parameterScales = this._generateScales(chart._data);
+    this.tooltip = null;
+    this.tooltipClass = this.className + '-tooltip';
 
     // Check for duplicate user parameters.
     const parameters = _.keys(userParameters);
@@ -29,9 +32,9 @@ export class Layer {
 
   }
 
-  _generateScales(data:Data):{ [index: string]: () => string|number } {
+  protected _generateScales(data: Data): { [index: string]: () => string|number } {
 
-    let scales:{ [index: string]: () => string|number } = {};
+    let scales: { [index: string]: () => string|number } = {};
 
     _.forOwn(this.userParameters, (parameter: any, parameterName: string) => {
 
@@ -80,7 +83,7 @@ export class Layer {
 
           } else {
 
-            extent = d3.extent(data.rows, (datum:any) => datum[dataField.name])
+            extent = d3.extent(data.rows, (datum: any) => datum[dataField.name]);
 
           }
 
@@ -99,14 +102,14 @@ export class Layer {
           }
 
           scale = d3.scale.linear()
-            .domain(d3.extent(data.rows, (datum:any) => datum[dataField.name]));
+            .domain(d3.extent(data.rows, (datum: any) => datum[dataField.name]));
 
           scaleObject.getContinuousRange(scale);
 
         }
 
         // Save method to apply scale.
-        parameterScale = (datum:any) => {
+        parameterScale = (datum: any) => {
           return scale(datum[dataField.name]);
         };
 
@@ -153,5 +156,6 @@ export class Layer {
   }
 
   public draw(): void {}
+  public remove(): void {}
 
 }
