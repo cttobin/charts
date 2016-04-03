@@ -5,12 +5,11 @@ import { Mappings } from './Mapping';
 import { Layer } from './layers/Layer';
 import { ColumnLayer } from './layers/Columns';
 import { LineLayer } from './layers/Lines';
-import { PointLayer } from './layers/Points';
+import { PointLayer, PointParameters } from './layers/Points';
 import { TextLayer } from './layers/TextLayer';
 
 import { Theme } from './Theme';
 import { Data } from './Data';
-import { LiveChart } from './LiveChart';
 
 import { getBox } from './getBox';
 
@@ -54,33 +53,32 @@ interface AnimationOptions {
 
 export class Chart {
 
-  public _data: Data;
-  public _mappings: Mappings;
-  public _scales: any;
-  public _plotArea: any;
-  public _plotAreaHeight: number;
-  public _plotAreaWidth: number;
-  public _theme: Theme;
-  public _animation: AnimationOptions;
-  public _layers: Array<Layer>;
+  public data: Data;
+  public mappings: Mappings;
+  public scales: {x: any, y: any};
+  public plotArea: d3.Selection<SVGElement>;
+  public plotAreaHeight: number;
+  public plotAreaWidth: number;
+  public theme: Theme;
+  public animation: AnimationOptions;
+  public layers: Array<Layer>;
 
   private _ticksFormat: ChartTicksFormat;
   private _ticks: ChartTicks;
-  private _chartOptions: any;
+  private chartOptions: ChartOptions;
   private _titles: ChartTitles;
 
-  private _svg: any;
-  private _container: any;
-  private _titleElement: any;
-  private _xTitleElement: any;
-  private _yTitleElement: any;
+  private svg: d3.Selection<SVGElement>;
+  private container: d3.Selection<any>;
+  private titleElement: d3.Selection<SVGElement>;
+  private xTitleElement: d3.Selection<SVGElement>;
+  private yTitleElement: d3.Selection<SVGElement>;
 
-  private _height: number;
-  private _width: number;
+  private height: number;
+  private width: number;
 
-  private _plotUpperOffset: number;
-  private _plotLeftOffset: number;
-
+  private plotUpperOffset: number;
+  private plotLeftOffset: number;
 
 
   constructor(data: any, mappings: Mappings, chartOptions?: ChartOptions) {
@@ -91,13 +89,13 @@ export class Chart {
       axisPadding: 12
     };
 
-    this._animation = {
+    this.animation = {
       duration: 1500,
       easing: 'elastic',
       delay: 0
     };
 
-    this._theme = new Theme(['#2980b9', '#27ae60', '#e74c3c', '#9b59b6', '#1cccaa', '#f39c12'], ['#f1c40f', '#f39c12']);
+    this.theme = new Theme(['#2980b9', '#27ae60', '#e74c3c', '#9b59b6', '#1cccaa', '#f39c12'], ['#f1c40f', '#f39c12']);
 
     // Default axis text formatting.
     this._ticksFormat = {x: (x: number) => x.toString(), y: (y: number) => y.toString()};
@@ -106,7 +104,7 @@ export class Chart {
     this._ticks = {x: 5, y: 5};
 
     // Overwrite default chart options with user options.
-    this._chartOptions = _.assign(defaultChartOptions, chartOptions);
+    this.chartOptions = _.assign(defaultChartOptions, chartOptions);
 
     // Chart main and axes titles.
     this._titles = {
@@ -123,18 +121,18 @@ export class Chart {
     	throw new Error('Fields given in "mapping" are not present in every "data" element.');
     }*/
 
-    this._data = new Data(data);
-    this._mappings = mappings;
+    this.data = new Data(data);
+    this.mappings = mappings;
 
     // Array to hold all layers in the plot.
-    this._layers = [];
-    this._scales = {};
+    this.layers = [];
+    this.scales = {x: null, y: null};
     return this;
 
   }
 
 
-  public static _replaceDefaults(defaults: any, replacements: any) {
+  public static replaceDefaults(defaults: any, replacements: any) {
     if (_.isPlainObject(defaults) && _.isPlainObject(replacements)) {
       _.assign(defaults, replacements);
     }
@@ -146,53 +144,62 @@ export class Chart {
    * @returns {boolean}
    */
   public isAnimated(): boolean {
-    return !_.isNull(this._animation);
+    return !_.isNull(this.animation);
   }
 
-  public draw(selector: string): LiveChart {
-
-    // Use d3.select() on selector string.
-    this._container = d3.select(selector);
-
-    if (this._container.empty()) {
-      throw new Error(`No elements found with the selector "${selector}".`)
-    }
-
-    // Add SVG for plot.
-    this._svg = this._container.append('svg').attr('class', 'plot');
+  public draw(selector: any): Chart {
 
     // Make sure there are layers to plot.
-    if (!this._layers.length) {
+    if (!this.layers.length) {
       throw new Error('No layers in plot.');
     }
 
+    // Use d3.select() on selector string.
+    this.container = d3.select(selector);
+    if (this.container.empty()) {
+      throw new Error('No elements found with the given selector.');
+    }
+
+    if (_.size(this.container[0]) > 1) {
+      throw new Error('Selector has selected more than one element.');
+    }
+
+    // Add SVG for plot.
+    this.svg = this.container.append('svg').attr('class', 'plot');
+    if (this.svg.empty()) {
+      throw new Error('Could not append an SVG to the selected element.');
+    }
+
     // Get container dimensions.
-    const containerBox = this._container[0][0].getBoundingClientRect();
-    this._height = containerBox.height;
-    this._width = containerBox.width;
-    this._plotAreaHeight = containerBox.height;
-    this._plotAreaWidth = containerBox.width;
-    this._plotUpperOffset = 0;
-    this._plotLeftOffset = 0;
+    const containerElement = <HTMLElement> this.container.node();
+    const containerBox = containerElement.getBoundingClientRect();
+    this.height = containerBox.height;
+    this.width = containerBox.width;
+    this.plotAreaHeight = containerBox.height;
+    this.plotAreaWidth = containerBox.width;
+    this.plotUpperOffset = 0;
+    this.plotLeftOffset = 0;
 
-    this._drawTitle();
-    this._drawAxesTitles();
-    this._drawAxes();
-    this._drawPlotArea();
-    this._positionTitles();
-    this._drawLayers();
+    this.drawTitle();
+    this.drawAxesTitles();
+    this.drawAxes();
+    this.drawPlotArea();
+    this.positionTitles();
+    this.drawLayers();
 
-    return new LiveChart(this);
+    return this;
 
   }
 
-
+  public removeData(): void {
+    _.forEach(this.layers, (layer: Layer) => layer.remove());
+  }
 
   public animate(options: AnimationOptions): Chart {
     if (_.isNull(options)) {
-      this._animation = null;
+      this.animation = null;
     } else {
-      this._animation = _.assign(this._animation, options);
+      this.animation = _.assign(this.animation, options);
     }
     return this;
   }
@@ -200,9 +207,11 @@ export class Chart {
 
   /**
    * Scatter plot.
+   * @param   {PointParameters} parameters
+   * @returns {Chart}
    */
-  public points(parameters?: LayerParameters): Chart {
-    this._layers.push(new PointLayer(this, parameters));
+  public points(parameters?: PointParameters): Chart {
+    this.layers.push(new PointLayer(this, parameters));
     return this;
   }
 
@@ -211,7 +220,7 @@ export class Chart {
    * Text.
    */
   public text(parameters?: LayerParameters): Chart {
-    this._layers.push(new TextLayer(this, parameters));
+    this.layers.push(new TextLayer(this, parameters));
     return this;
   }
 
@@ -220,7 +229,7 @@ export class Chart {
    * Lines chart.
    */
   public lines(parameters?: LayerParameters): Chart {
-    this._layers.push(new LineLayer(this, parameters));
+    this.layers.push(new LineLayer(this, parameters));
     return this;
   }
 
@@ -231,7 +240,7 @@ export class Chart {
    * @returns {Chart}
    */
   public columns(parameters?: LayerParameters): Chart {
-    this._layers.push(new ColumnLayer(this, parameters));
+    this.layers.push(new ColumnLayer(this, parameters));
     return this;
   }
 
@@ -244,28 +253,34 @@ export class Chart {
     return this;
   }
 
+
+  /**
+   * Set the main, axes and other titles.
+   * @param _titles
+   * @returns {Chart}
+   */
   public titles(_titles: ChartTitles): Chart {
-    Chart._replaceDefaults(this._titles, _titles);
+    Chart.replaceDefaults(this._titles, _titles);
     return this;
   }
 
   public ticks(numberOfTicks: ChartTicks): Chart {
-    Chart._replaceDefaults(this._ticks, numberOfTicks);
+    Chart.replaceDefaults(this._ticks, numberOfTicks);
     return this;
   }
 
   public ticksFormat(formats: ChartTicksFormat): Chart {
-    Chart._replaceDefaults(this._ticksFormat, formats);
+    Chart.replaceDefaults(this._ticksFormat, formats);
     return this;
   }
 
-  private _drawTitle(): void {
+  private drawTitle(): void {
 
     if (this._titles.main) {
 
-      const padding = this._chartOptions.titlePadding * 2;
+      const padding = this.chartOptions.titlePadding * 2;
 
-      this._titleElement = this._svg
+      this.titleElement = this.svg
         .append('text')
         .attr({
           'class': 'title',
@@ -273,20 +288,20 @@ export class Chart {
         })
         .text(this._titles.main);
 
-      const titleBox = getBox(this._titleElement);
-      this._plotAreaHeight -= (titleBox.height + padding);
-      this._plotUpperOffset = (titleBox.height + padding);
+      const titleBox = getBox(this.titleElement);
+      this.plotAreaHeight -= (titleBox.height + padding);
+      this.plotUpperOffset = (titleBox.height + padding);
 
     }
 
   }
 
-  private _drawAxesTitles(): void {
+  private drawAxesTitles(): void {
 
     // The total axis title padding is doubled since it will surround the text.
-    const padding = this._chartOptions.axisTitlePadding * 2;
+    const padding = this.chartOptions.axisTitlePadding * 2;
 
-    this._xTitleElement = this._svg
+    this.xTitleElement = this.svg
       .append('text')
       .attr({
         'class': 'axis-title',
@@ -295,10 +310,10 @@ export class Chart {
       .text(this._titles.x);
 
     // Vertically shrink available plot area.
-    const xTitleBox = getBox(this._xTitleElement);
-    this._plotAreaHeight -= (xTitleBox.height + padding);
+    const xTitleBox = getBox(this.xTitleElement);
+    this.plotAreaHeight -= (xTitleBox.height + padding);
 
-    this._yTitleElement = this._svg
+    this.yTitleElement = this.svg
       .append('text')
       .attr({
         'class': 'axis-title',
@@ -307,40 +322,40 @@ export class Chart {
       })
       .text(this._titles.y);
 
-    const yTitleBox = getBox(this._yTitleElement);
+    const yTitleBox = getBox(this.yTitleElement);
 
     // After rotation, the height is the width.
-    this._plotAreaWidth -= (yTitleBox.height + padding);
-    this._plotLeftOffset += (yTitleBox.height + padding);
+    this.plotAreaWidth -= (yTitleBox.height + padding);
+    this.plotLeftOffset += (yTitleBox.height + padding);
 
   }
 
   /**
    * Position main and axes titles.
    */
-  private _positionTitles(): void {
+  private positionTitles(): void {
 
     // Position to horizontal centre in the middle of the plot area.
-    const centred = this._plotLeftOffset + (this._plotAreaWidth / 2);
+    const centred = this.plotLeftOffset + (this.plotAreaWidth / 2);
 
-    const titleBox = getBox(this._titleElement);
-    setTransform(this._titleElement, centred, this._chartOptions.titlePadding + (titleBox.height / 2));
+    const titleBox = getBox(this.titleElement);
+    setTransform(this.titleElement, centred, this.chartOptions.titlePadding + (titleBox.height / 2));
 
-    const xTitleBox = getBox(this._xTitleElement);
-    setTransform(this._xTitleElement, centred, this._height - (xTitleBox.height / 2) - this._chartOptions.axisTitlePadding);
+    const xTitleBox = getBox(this.xTitleElement);
+    setTransform(this.xTitleElement, centred, this.height - (xTitleBox.height / 2) - this.chartOptions.axisTitlePadding);
 
-    const yTitleBox = getBox(this._yTitleElement);
-    this._yTitleElement.attr('transform', translate(this._chartOptions.axisTitlePadding + (yTitleBox.height / 2), this._height / 2) + ' rotate(270)');
+    const yTitleBox = getBox(this.yTitleElement);
+    this.yTitleElement.attr('transform', translate(this.chartOptions.axisTitlePadding + (yTitleBox.height / 2), this.height / 2) + ' rotate(270)');
 
   }
 
-  private _drawPlotArea(): void {
+  private drawPlotArea(): void {
 
     // The plot area
-    this._plotArea = this._svg
+    this.plotArea = this.svg
       .append('g')
       .attr({
-        'transform': translate(this._plotLeftOffset, this._plotUpperOffset),
+        'transform': translate(this.plotLeftOffset, this.plotUpperOffset),
         'class': 'plot-area'
       });
 
@@ -351,72 +366,91 @@ export class Chart {
    * Render all chart layers.
    * @private
    */
-  private _drawLayers(): void {
+  private drawLayers(): void {
 
-    _.forEach(this._layers, function (layer: Layer) {
+    _.forEach(this.layers, function (layer: Layer) {
       layer.draw();
     });
 
   }
 
-  private _drawAxes(): void {
+  private drawAxes(): void {
 
-    this._scales.y = d3
+    this.scales.y = d3
       .scale
       .linear()
-      .domain(d3.extent(this._data.rows, (datum: {[index: string]: any}) => datum[this._mappings.y.name]))
-      .range([this._plotAreaHeight, 0]);
+      .domain(d3.extent(this.data.rows, (datum: {[index: string]: any}) => datum[this.mappings.y.name]))
+      .range([this.plotAreaHeight, 0]);
 
     const yAxis = d3.svg.axis()
-      .scale(this._scales.y)
+      .scale(this.scales.y)
       .orient('left')
       .ticks(this._ticks.y)
       .tickFormat(this._ticksFormat.y);
 
-    const yAxisElement = this._svg
+    const yAxisElement = this.svg
       .append('g')
       .attr('class', 'y axis')
       .call(yAxis);
 
     // Remove y-axis from available plot width.
-    this._plotAreaWidth -= getBox(yAxisElement).width;
+    this.plotAreaWidth -= getBox(yAxisElement).width;
 
-    // Create x scale.
-    this._scales.x = d3
-      .scale
-      .linear()
-      .domain(d3.extent(this._data.rows, (datum: {[index: string]: any}) => datum[this._mappings.x.name]))
-      .range([0, this._plotAreaWidth]);
+
+    if (_.some(_.map(this.layers, 'ordinalXScale'))) {
+
+      const domain = _(this.data.rows)
+        .map((row: any) => {
+          return row[this.mappings.x.name].toString();
+        })
+        .uniq()
+        .value();
+
+      this.scales.x = d3
+        .scale
+        .ordinal()
+        .domain(domain)
+        .rangeRoundBands([0, this.plotAreaWidth], 0.1);
+
+    } else {
+
+      this.scales.x = d3
+        .scale
+        .linear()
+        .domain(d3.extent(this.data.rows, (datum: {[index: string]: any}) => datum[this.mappings.x.name]))
+        .range([0, this.plotAreaWidth]);
+
+    }
 
     const xAxis = d3.svg.axis()
-      .scale(this._scales.x)
+      .scale(this.scales.x)
       .orient('bottom')
       .ticks(this._ticks.x)
       .tickFormat(this._ticksFormat.x);
 
     // Add x-axis to chart.
-    const xAxisElement = this._svg
+    const xAxisElement = this.svg
       .append('g')
       .attr('class', 'x axis')
       .call(xAxis);
 
     // Subtract x-axis height and overflow width from allowable area.
     const xAxisBox = getBox(xAxisElement);
-    this._plotAreaHeight -= xAxisBox.height;
-    this._plotAreaWidth -= this._chartOptions.axisTitlePadding + ((xAxisBox.width - this._plotAreaWidth) / 2);
+    this.plotAreaHeight -= xAxisBox.height;
+    this.plotAreaWidth -= this.chartOptions.axisTitlePadding + ((xAxisBox.width - this.plotAreaWidth) / 2);
 
     // Move the y-axis now that the height of the x-axis is known.
-    this._scales.y.range([this._plotAreaHeight, 0]);
-    yAxis.scale(this._scales.y);
+    this.scales.y.range([this.plotAreaHeight, 0]);
+    yAxis.scale(this.scales.y);
     yAxisElement.call(yAxis);
-    this._plotLeftOffset += getBox(yAxisElement).width;
-    yAxisElement.attr('transform', translate(this._plotLeftOffset, this._plotUpperOffset));
+    this.plotLeftOffset += getBox(yAxisElement).width;
+    yAxisElement.attr('transform', translate(this.plotLeftOffset, this.plotUpperOffset));
 
     // Move x-axis after figuring out how much its labels overflow the canvas.
-    this._scales.x.range([0, this._plotAreaWidth]);
-    xAxis.scale(this._scales.x);
+    this.scales.x.range([0, this.plotAreaWidth], 0.1);
+    xAxis.scale(this.scales.x);
     xAxisElement.call(xAxis);
-    xAxisElement.attr('transform', translate(this._plotLeftOffset, this._plotAreaHeight + this._plotUpperOffset));
+    xAxisElement.attr('transform', translate(this.plotLeftOffset, this.plotAreaHeight + this.plotUpperOffset));
 
   }
 

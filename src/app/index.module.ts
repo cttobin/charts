@@ -23,47 +23,39 @@ import { Data } from './components/Data';
 
   const department = PlotJS.mapping('department');
 
-  PlotJS.chart(rawData, {
-      x: PlotJS.mapping('year'),
-      y: PlotJS.mapping('sales'),
-      label: department
-    })
-    .ticksFormat({
-      y: PlotJS.labels.comma(),
-      x: PlotJS.labels.integer()
-    })
-    .lines({
-      stroke: department
-    })
-    .points({fill: department})
-    .titles({
-      main: 'What',
-      y: 'Total Sales'
-    })
-    .animate({delay: 250})
-    // .title('Chart Title')
-    // .draw('.chart-1');
+  // PlotJS.chart(rawData, {
+  //     x: PlotJS.mapping('year'),
+  //     y: PlotJS.mapping('sales'),
+  //     label: department
+  //   })
+  //   .ticksFormat({
+  //     y: PlotJS.labels.comma(),
+  //     x: PlotJS.labels.integer()
+  //   })
+  //   .lines({
+  //     stroke: department
+  //   })
+  //   .points({fill: department})
+  //   .titles({
+  //     main: 'What',
+  //     y: 'Total Sales'
+  //   })
+  //   .animate({delay: 250})
+  //   // .title('Chart Title')
+  //   .draw('.chart-1');
 
-  PlotJS.chart(rawData, {
+  const chart = PlotJS.chart(_.filter(rawData, {'department': 'A'}), {
       x: PlotJS.mapping('year'),
-      y: PlotJS.mapping('sales'),
-      label: department
+      y: PlotJS.mapping('sales')
     })
     .ticksFormat({
       y: PlotJS.labels.comma(),
       x: PlotJS.labels.integer()
     })
-    .lines({
-      stroke: department
-    })
-    .points({fill: department})
-    .titles({
-      main: 'What',
-      y: 'Total Sales'
-    })
-    .animate({delay: 250})
-    // .title('Chart Title')
-    .draw('.chart-3');
+    .points({fill: PlotJS.mapping('department')})
+    .lines({stroke: PlotJS.mapping('department')})
+    .title('Chart 2')
+    .draw('.chart-example');
 
 })();
 

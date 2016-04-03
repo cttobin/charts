@@ -1,11 +1,19 @@
 import { Chart } from './../Chart';
-import { Layer } from './Layer';
-import { LayerParameters } from './../LayerParameters';
+import { Layer, LayerNumberParameter, LayerStringParameter } from './Layer';
 import { ContinuousRangeScale } from './../Scale';
 import { OrdinalRangeScale } from './../Scale';
+import { isOrdinalScale } from './../utilities/isOrdinalScale';
+
+export interface PointParameters {
+  size?: LayerNumberParameter;
+  fill?: LayerStringParameter;
+  opacity?: LayerNumberParameter;
+  stroke?: LayerStringParameter;
+  color?: LayerStringParameter;
+}
 
 
-export interface PointParameters extends LayerParameters {
+interface PointScales {
   size: () => number;
   fill: () => string;
   opacity: () => number;
@@ -17,11 +25,11 @@ export class PointLayer extends Layer {
 
   private elements: any;
 
-  constructor(chart: Chart, userParameters: LayerParameters) {
+  constructor(chart: Chart, userParameters: PointParameters) {
 
-    const theme = chart._theme;
+    const theme = chart.theme;
 
-    super('points', chart, userParameters, {
+    super('points', false, false, chart, userParameters, {
 
       'size': new ContinuousRangeScale(4, [2, 6]),
       'fill': new OrdinalRangeScale(theme.swatch[1], theme.swatch, theme.gradient),
@@ -33,22 +41,25 @@ export class PointLayer extends Layer {
   }
 
   public remove(): void {
-    //_.forEach(this.points, (point) => point.remove());
-    //this.elements.remove()
-    //this.elements.attr('r', 0);
+    this.elements.remove();
   }
 
   public draw(): void {
 
-    let parameterScales: PointParameters = this.parameterScales as PointParameters;
-    let chart = this.chart;
-    const mappings = chart._mappings;
+    const parameterScales = <PointScales> this.parameterScales;
+    const chart = this.chart;
+    const mappings = chart.mappings;
+    const xScale = chart.scales.x;
 
-    this.elements = chart._plotArea
+    if (isOrdinalScale(xScale)) {
+      xScale.rangeRoundBands([xScale.rangeBand() / 2, chart.plotAreaWidth + (xScale.rangeBand() / 2)], 0.1);
+    }
+
+    this.elements = chart.plotArea
       .append('g')
       .attr('class', this.className)
-      .selectAll('.datum-points')
-      .data(chart._data.rows)
+      .selectAll(this.datumClassName)
+      .data(chart.data.rows)
       .enter()
       .append('circle')
       .style({
@@ -58,13 +69,13 @@ export class PointLayer extends Layer {
       })
       .on('mouseover', (datum: any) => {
 
-        this.tooltip = chart._plotArea
+        this.tooltip = chart.plotArea
           .append('circle')
           .attr({
             'r': parameterScales.size() + 3,
-            'cx': chart._scales.x(datum[mappings.x.name]),
-            'cy': chart._scales.y(datum[mappings.y.name]),
-            'class': this.tooltipClass
+            'cx': chart.scales.x(datum[mappings.x.name]),
+            'cy': chart.scales.y(datum[mappings.y.name]),
+            'class': this.tooltipClassName
           });
 
       })
@@ -73,19 +84,19 @@ export class PointLayer extends Layer {
       })
       .attr({
         'r': parameterScales.size,
-        'cx': (datum: any) => chart._scales.x(datum[mappings.x.name])
+        'cx': (datum: any) => chart.scales.x(datum[mappings.x.name])
       });
 
     if (chart.isAnimated()) {
-      const animation = chart._animation;
-      this.elements = this.elements.attr('cy', () => chart._scales.y(0))
+      const animation = chart.animation;
+      this.elements = this.elements.attr('cy', () => chart.scales.y(0))
         .transition()
         .duration(animation.duration)
         .ease(animation.easing)
         .delay(animation.delay);
     }
 
-    this.elements.attr('cy', (datum: any) => chart._scales.y(datum[mappings.y.name]));
+    this.elements.attr('cy', (datum: any) => chart.scales.y(datum[mappings.y.name]));
 
   }
 

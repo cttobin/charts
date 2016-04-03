@@ -1,3 +1,6 @@
+import { Data } from './Data';
+
+
 export interface Mappings {
   x: Mapping;
   y: Mapping;
@@ -10,7 +13,7 @@ export class Mapping {
 
   }
 
-  public isValid(data): boolean {
+  public isValid(data: Data): boolean {
 
     if (this.hasCustomDefinition()) {
 

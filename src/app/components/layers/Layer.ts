@@ -1,38 +1,59 @@
 import { Chart } from './../Chart';
 import { LayerParameters } from './../LayerParameters';
 import { Data } from './../Data';
-import { orList } from './../quotedList';
 import { StaticRangeScale } from './../Scale';
 import { Mapping } from './../Mapping';
+import { andList, orList } from './../quotedList';
 
 
-export class Layer {
+export type LayerStringParameter = string | Mapping | ((datum: {[index: string]: any}) => string);
+export type LayerNumberParameter = number | Mapping | ((datum: {[index: string]: any}) => number);
+
+
+export abstract class Layer {
 
   protected className: string;
   protected parameterScales: LayerParameters;
   protected tooltip: SVGElement;
-  protected tooltipClass: string;
+  protected tooltipClassName: string;
+  protected datumClassName: string;
+
+  abstract draw(): void;
+  abstract remove(): void;
 
   constructor(protected name: string,
+              public ordinalXScale: boolean,
+              public ordinalYScale: boolean,
               protected chart: Chart,
               protected userParameters: LayerParameters,
               protected defaultParameters: LayerParameters) {
 
-    // The class to apply to the layer when its drawn. Used for CSS styling.
+    // The class to apply to the layer when it's drawn. Used for CSS styling.
     this.className = 'layer-' + name;
-    this.parameterScales = this._generateScales(chart._data);
-    this.tooltip = null;
-    this.tooltipClass = this.className + '-tooltip';
+    this.datumClassName = this.className + '-datum';
+    this.tooltipClassName = this.className + '-tooltip';
 
-    // Check for duplicate user parameters.
-    const parameters = _.keys(userParameters);
-    if (parameters.length !== _.uniq(parameters).length) {
-      throw new Error(`Duplicate parameters passed to ${name} layer.`);
-    }
+    this.parameterScales = this._generateScales(chart.data);
+    this.tooltip = null;
 
   }
 
   protected _generateScales(data: Data): { [index: string]: () => string|number } {
+
+    const userParameterNames = _.keys(this.userParameters);
+    const clash = _.intersection(userParameterNames, ['fill', 'stroke']);
+    if (_.includes(userParameterNames, 'color') && !_.isEmpty(clash)) {
+      throw new Error(`Cannot specify ${orList(clash)} because "color" is set.`);
+    }
+
+    // Check for invalid parameters.
+    const validParameters = _.keys(this.defaultParameters);
+    const surplusParameters = _.difference(userParameterNames, validParameters);
+    if (!_.isEmpty(surplusParameters)) {
+      const validList = andList(validParameters);
+      throw new Error(`Unused parameter(s) ${andList(surplusParameters)} passed to "${this.name}" layer. ` +
+        `Valid parameters are ${validList}.`);
+    }
 
     let scales: { [index: string]: () => string|number } = {};
 
@@ -44,11 +65,6 @@ export class Layer {
       // Find the appropriate scale.
       const scaleObject = this.defaultParameters[parameterName];
 
-      if (_.isUndefined(scaleObject)) {
-        const validParameters = _.keys(this.defaultParameters).join(', ');
-        throw new Error(`"${parameterName}" is not a valid parameter for ${this.name}. The parameters you may choose from are: ${validParameters}.`);
-      }
-
       // Will map the parameter to a data field if necessary.
       if (parameter instanceof Mapping) {
 
@@ -58,7 +74,7 @@ export class Layer {
         // Static parameters can not be mapped.
         if (scaleObject.isStatic()) {
           const validValues = orList(scaleObject.validValues);
-          throw new Error(`You have attempted to map "${dataField.name}" to the "${parameterName}" parameter but this parameter cannot be mapped to the data. You may only specific a fixed value (one of: ${validValues}).`);
+          throw new Error(`You have attempted to map "${dataField.name}" to the "${parameterName}" parameter but this parameter cannot be mapped to the data. You may only specify a fixed value (one of: ${validValues}).`);
         }
 
         let scale;
@@ -132,8 +148,6 @@ export class Layer {
 
     });
 
-    // All parameters provided by the user.
-    let userParameterNames = _.keys(this.userParameters);
     _(this.defaultParameters)
       .keys()
       .reject(function (name: string) {
@@ -154,8 +168,5 @@ export class Layer {
     return scales;
 
   }
-
-  public draw(): void {}
-  public remove(): void {}
 
 }

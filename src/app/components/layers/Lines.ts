@@ -2,6 +2,7 @@ import { Chart } from './../Chart';
 import { Layer } from './Layer';
 import { LayerParameters } from './../LayerParameters';
 import { StaticRangeScale, ContinuousRangeScale, OrdinalRangeScale } from './../Scale';
+import { isOrdinalScale } from './../utilities/isOrdinalScale';
 
 
 interface LineParameters extends LayerParameters {
@@ -15,11 +16,13 @@ interface LineParameters extends LayerParameters {
 
 export class LineLayer extends Layer {
 
+  private elements: any;
+
   constructor(chart: Chart, userParameters: LayerParameters) {
 
-    const theme = chart._theme;
+    const theme = chart.theme;
 
-    super('lines', chart, userParameters, {
+    super('lines', false, false, chart, userParameters, {
 
       // Line thickness.
       'thickness': new ContinuousRangeScale(2, [1, 10]),
@@ -42,15 +45,25 @@ export class LineLayer extends Layer {
     };
   }
 
+  public remove(): void {
+    this.elements.remove();
+  }
+
   draw(): void {
 
     let chart = this.chart;
-    const parameterScales = super._generateScales(chart._data) as LineParameters;
+    const parameterScales = super._generateScales(chart.data) as LineParameters;
     const interpolation = 'cardinal';
+    const xScale = chart.scales.x;
+
+    if (isOrdinalScale(xScale)) {
+      xScale.rangeRoundBands([xScale.rangeBand() / 2, chart.plotAreaWidth + (xScale.rangeBand() / 2)], 0.1);
+    }
+
 
     const lineFunction = d3.svg.line()
-      .x((datum: any) => chart._scales.x(datum[chart._mappings.x.name]))
-      .y((datum: any) => chart._scales.y(datum[chart._mappings.y.name]))
+      .x((datum: any) => chart.scales.x(datum[chart.mappings.x.name]))
+      .y((datum: any) => chart.scales.y(datum[chart.mappings.y.name]))
       .interpolate(interpolation);
 
     // Assume the data has not been grouped and it should just
@@ -70,7 +83,7 @@ export class LineLayer extends Layer {
       const mappingExists = _.includes(_.keys(this.userParameters), item);
       if (!group && mappingExists) {
 
-        lineData = _(chart._data.rows)
+        lineData = _(chart.data.rows)
           .groupBy(this.userParameters[item].name)
           .toArray()
           .value();
@@ -85,10 +98,10 @@ export class LineLayer extends Layer {
     // Since no grouping variable has been found, the data must
     // be converted into a multidimensional array to suit d3.
     if (!group) {
-      lineData = [chart._data.rows];
+      lineData = [chart.data.rows];
     }
 
-    let lines = chart._plotArea
+    this.elements = chart.plotArea
       .append('g')
       .attr('class', this.className)
       .selectAll('.datum-lines')
@@ -107,15 +120,15 @@ export class LineLayer extends Layer {
     if (chart.isAnimated()) {
 
       // Animation settings.
-      const animation = chart._animation;
+      const animation = chart.animation;
 
       // Before the animation begins, the line must have a starting position at the bottom of the chart.
       const initialLineFunction = d3.svg.line()
-        .x((datum: any) => chart._scales.x(datum[chart._mappings.x.name]))
-        .y(() => chart._scales.y(0))
+        .x((datum: any) => chart.scales.x(datum[chart.mappings.x.name]))
+        .y(() => chart.scales.y(0))
         .interpolate(interpolation);
 
-      lines = lines
+      this.elements = this.elements
         .attr('d', initialLineFunction)
         .transition()
         .duration(animation.duration)
@@ -123,7 +136,7 @@ export class LineLayer extends Layer {
         .delay(animation.delay);
     }
 
-    lines.attr('d', lineFunction);
+    this.elements.attr('d', lineFunction);
 
   }
 

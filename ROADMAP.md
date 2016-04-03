@@ -1,9 +1,13 @@
 # 0.1
 
+* Update the chart when the browser window resizes.
+
+* Savage label support (i.e. labels on bars or whatever).
+
 * Horizontal and vertical lines. Probably will accept an array or single value that should bisect whatever axis.
-  
+
   `chart.horizontalLine([10, 20]);`    
-    
+
 * Gridlines.
 * Legends.
 * Layouts (different gridlines, axis positioning etc.).
@@ -17,10 +21,10 @@
     }
   })
   ```
-  
+
 * Facets
-  * Responsive if possible so they would stack on mobiles. 
-  * Support common and free scales. 
+  * Responsive if possible so they would stack on mobiles.
+  * Support common and free scales.
 
 * Update chart functions. Probably have `.clearData()`, `.updateData()` and `.replaceData()` functions.
 
@@ -39,6 +43,7 @@
 * Bars (horizontal columns).
 * Stacked bars.
 * Pie charts. May look at polar coordinates like ggplot.
+* Error bars.
 
 ## Data Transformation Layers
 * Density plots.
@@ -53,8 +58,8 @@ chart(data.toDensity())
   .lines({fill: 'group'})
 ```
 
-The user would have to then specify `x` and `y`, but that's a bit boilerplatey. To avoid that a parameter could be set 
-by the `Data` class so that `Chart` will know to use whatever magic variables are generated. Alternatively there could be 
+The user would have to then specify `x` and `y`, but that's a bit boilerplatey. To avoid that a parameter could be set
+by the `Data` class so that `Chart` will know to use whatever magic variables are generated. Alternatively there could be
 prebuilt functions like:
 
 ```

@@ -1,10 +1,6 @@
 {
   "rules": {
-    "ban": [true,
-      ["_", "extend"],
-      ["_", "isNull"],
-      ["_", "isDefined"]
-    ],
+    "ban": [true],
     "class-name": true,
     "comment-format": [true,
       "check-space"

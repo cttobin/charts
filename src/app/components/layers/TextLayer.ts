@@ -18,9 +18,9 @@ export class TextLayer extends Layer {
 
   constructor(chart: Chart, userParameters: LayerParameters) {
 
-    const theme = chart._theme;
+    const theme = chart.theme;
 
-    super('text', chart, userParameters, {
+    super('text', false, false, chart, userParameters, {
 
       'size': new ContinuousRangeScale(20, [2, 6]),
       'fill': new OrdinalRangeScale(theme.swatch[1], theme.swatch, theme.gradient),
@@ -32,22 +32,24 @@ export class TextLayer extends Layer {
 
   }
 
+  public remove(): void {}
+
   public draw(): void {
 
     let parameterScales = this.parameterScales as TextLayerParameters;
     let chart = this.chart;
-    const mappings = chart._mappings;
+    const mappings = chart.mappings;
 
-    chart._plotArea
+    chart.plotArea
       .append('g')
       .attr('class', this.className)
       .selectAll('.datum-points')
-      .data(chart._data.rows)
+      .data(chart.data.rows)
       .enter()
       .append('text')
       .attr({
-        'x': (datum: any) => chart._scales.x(datum[mappings.x.name]),
-        'y': (datum: any) => chart._scales.y(datum[mappings.y.name])
+        'x': (datum: any) => chart.scales.x(datum[mappings.x.name]),
+        'y': (datum: any) => chart.scales.y(datum[mappings.y.name])
       })
       .style({
         'fill': parameterScales.fill,

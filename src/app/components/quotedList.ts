@@ -6,10 +6,14 @@
  */
 function quoteList (terminal: string): (items: any[]) => string {
 
-    return function (items: any[]) : string {
-        let start = '"' + _.initial(items).join('", "') + '"';
-        return start + ' ' + terminal + ' "' + _.last(items) + '"';
-    };
+  return function (items: any[]) : string {
+    if (_.size(items) === 1) {
+      return `"${items}"`;
+    }
+
+    let start = '"' + _.initial(items).join('", "') + '"';
+    return start + ' ' + terminal + ' "' + _.last(items) + '"';
+  };
 
 }
 
