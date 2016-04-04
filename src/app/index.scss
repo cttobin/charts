@@ -48,6 +48,19 @@ svg.plot {
     font-size: 12px;
   }
 
+  .grid {
+
+    .tick {
+      stroke: lightgrey;
+      opacity: 0.7;
+    }
+
+    path {
+      stroke-width: 0;
+    }
+
+  }
+
   .axis {
 
     // Axis labels.

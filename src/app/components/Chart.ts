@@ -80,6 +80,9 @@ export class Chart {
   private plotUpperOffset: number;
   private plotLeftOffset: number;
 
+  private xAxis: d3.svg.Axis;
+  private yAxis: d3.svg.Axis;
+
 
   constructor(data: any, mappings: Mappings, chartOptions?: ChartOptions) {
 
@@ -382,7 +385,7 @@ export class Chart {
       .domain(d3.extent(this.data.rows, (datum: {[index: string]: any}) => datum[this.mappings.y.name]))
       .range([this.plotAreaHeight, 0]);
 
-    const yAxis = d3.svg.axis()
+    this.yAxis = d3.svg.axis()
       .scale(this.scales.y)
       .orient('left')
       .ticks(this._ticks.y)
@@ -391,11 +394,10 @@ export class Chart {
     const yAxisElement = this.svg
       .append('g')
       .attr('class', 'y axis')
-      .call(yAxis);
+      .call(this.yAxis);
 
     // Remove y-axis from available plot width.
     this.plotAreaWidth -= getBox(yAxisElement).width;
-
 
     if (_.some(_.map(this.layers, 'ordinalXScale'))) {
 
@@ -422,7 +424,7 @@ export class Chart {
 
     }
 
-    const xAxis = d3.svg.axis()
+    this.xAxis = d3.svg.axis()
       .scale(this.scales.x)
       .orient('bottom')
       .ticks(this._ticks.x)
@@ -432,7 +434,7 @@ export class Chart {
     const xAxisElement = this.svg
       .append('g')
       .attr('class', 'x axis')
-      .call(xAxis);
+      .call(this.xAxis);
 
     // Subtract x-axis height and overflow width from allowable area.
     const xAxisBox = getBox(xAxisElement);
@@ -441,16 +443,51 @@ export class Chart {
 
     // Move the y-axis now that the height of the x-axis is known.
     this.scales.y.range([this.plotAreaHeight, 0]);
-    yAxis.scale(this.scales.y);
-    yAxisElement.call(yAxis);
+    this.yAxis.scale(this.scales.y);
     this.plotLeftOffset += getBox(yAxisElement).width;
-    yAxisElement.attr('transform', translate(this.plotLeftOffset, this.plotUpperOffset));
 
     // Move x-axis after figuring out how much its labels overflow the canvas.
     this.scales.x.range([0, this.plotAreaWidth], 0.1);
-    xAxis.scale(this.scales.x);
-    xAxisElement.call(xAxis);
+    this.xAxis.scale(this.scales.x);
+
+    this.drawGridLines();
+
+    yAxisElement.call(this.yAxis);
+    yAxisElement.attr('transform', translate(this.plotLeftOffset, this.plotUpperOffset));
+
+    xAxisElement.call(this.xAxis);
     xAxisElement.attr('transform', translate(this.plotLeftOffset, this.plotAreaHeight + this.plotUpperOffset));
+
+  }
+
+
+  private drawGridLines(): void {
+
+    const xAxisGrid = d3.svg.axis()
+      .ticks(this.xAxis.ticks())
+      .scale(this.xAxis.scale())
+      .tickSize(this.plotAreaHeight, 0)
+      .tickFormat('')
+      .orient('top');
+
+    this.svg.append('g')
+      .classed('x', true)
+      .classed('grid', true)
+      .attr('transform', translate(this.plotLeftOffset, this.plotAreaHeight + this.plotUpperOffset))
+      .call(xAxisGrid);
+
+    const yAxisGrid = d3.svg.axis()
+      .scale(this.yAxis.scale())
+      .ticks(this.yAxis.ticks())
+      .tickSize(this.plotAreaWidth, 0)
+      .tickFormat('')
+      .orient('right');
+
+    this.svg.append('g')
+      .classed('y', true)
+      .classed('grid', true)
+      .attr('transform', translate(this.plotLeftOffset, this.plotUpperOffset))
+      .call(yAxisGrid);
 
   }
 
