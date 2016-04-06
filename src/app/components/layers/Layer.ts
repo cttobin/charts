@@ -14,7 +14,7 @@ export abstract class Layer {
 
   protected className: string;
   protected parameterScales: LayerParameters;
-  protected tooltip: SVGElement;
+  protected tooltip: d3.Selection<SVGElement>;
   protected tooltipClassName: string;
   protected datumClassName: string;
 

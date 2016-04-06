@@ -3,6 +3,6 @@
  * @param element
  * @returns {*}
  */
-export function getBox (element: any) : SVGRect {
+export function getBox (element: any): SVGRect {
     return element.node().getBBox();
 }

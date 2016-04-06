@@ -1,11 +1,20 @@
 import { Chart } from './../Chart';
-import { Layer } from './Layer';
+import { Layer, LayerNumberParameter, LayerStringParameter } from './Layer';
 import { LayerParameters } from './../LayerParameters';
 import { OrdinalRangeScale, ContinuousRangeScale } from './../Scale';
 import { isOrdinalScale } from './../utilities/isOrdinalScale';
 
 
-interface ColumnParameters extends LayerParameters {
+export interface ColumnParameters {
+  fill?: LayerStringParameter;
+  opacity?: LayerNumberParameter;
+  stroke?: LayerStringParameter;
+  color?: LayerStringParameter;
+  texture?: any;
+}
+
+
+interface ColumnScales {
   fill: () => string;
   opacity: () => number;
   stroke: () => string;
@@ -29,7 +38,7 @@ export class ColumnLayer extends Layer {
 
     let chart = this.chart;
     const mappings = chart.mappings;
-    const parameterScales = this.parameterScales as ColumnParameters;
+    const parameterScales = <ColumnScales> this.parameterScales;
     const rows = chart.data.rows;
     const xName = mappings.x.name;
     const yName = mappings.y.name;

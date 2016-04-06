@@ -11,7 +11,11 @@ import { TextLayer } from './layers/TextLayer';
 import { Theme } from './Theme';
 import { Data } from './Data';
 
-import { getBox } from './getBox';
+import { getBox } from './utilities/getBox';
+
+
+import { Extra, ExtraOffset, ExtraPosition } from './extras/Extra';
+import { TextExtra } from './extras/TextExtra';
 
 
 /**
@@ -24,7 +28,7 @@ function translate(x: number, y: number): string {
   return `translate(${x}, ${y})`;
 }
 
-function setTransform(element: d3.Selection<any>, x: number, y: number): void {
+function setTransform(element: d3.Selection<SVGElement>, x: number, y: number): void {
   element.attr('transform', translate(x, y));
 }
 
@@ -83,6 +87,13 @@ export class Chart {
   private xAxis: d3.svg.Axis;
   private yAxis: d3.svg.Axis;
 
+  private extras: {
+    top: Extra[];
+    bottom: Extra[];
+    left: Extra[];
+    right: Extra[];
+  };
+
 
   constructor(data: any, mappings: Mappings, chartOptions?: ChartOptions) {
 
@@ -113,6 +124,13 @@ export class Chart {
     this._titles = {
       x: _.capitalize(mappings.x.name),
       y: _.capitalize(mappings.y.name)
+    };
+
+    this.extras = {
+      top: [],
+      right: [],
+      bottom: [],
+      left: []
     };
 
    /* // Check that the mapping fields are contained within 'data'.
@@ -150,7 +168,14 @@ export class Chart {
     return !_.isNull(this.animation);
   }
 
-  public draw(selector: any): Chart {
+
+  
+  /**
+   * Render the chart at the given selector.
+   * @param  {string} selector
+   * @returns Chart
+   */
+  public draw(selector: string): Chart {
 
     // Make sure there are layers to plot.
     if (!this.layers.length) {
@@ -183,12 +208,13 @@ export class Chart {
     this.plotUpperOffset = 0;
     this.plotLeftOffset = 0;
 
-    this.drawTitle();
-    this.drawAxesTitles();
-    this.drawAxes();
-    this.drawPlotArea();
-    this.positionTitles();
-    this.drawLayers();
+    // this.drawTitle();
+    // this.drawAxesTitles();
+    // this.drawAxes();
+    // this.drawPlotArea();
+    // this.positionTitles();
+    // this.drawLayers();
+    this.drawExtras();
 
     return this;
 
@@ -252,7 +278,8 @@ export class Chart {
    * Set main plot title.
    */
   public title(titleText: string): Chart {
-    this._titles.main = titleText;
+    const extra = new TextExtra(ExtraPosition.Top, ['title', 'main-title'], titleText);
+    this.addTopExtra(extra);
     return this;
   }
 
@@ -489,6 +516,110 @@ export class Chart {
       .attr('transform', translate(this.plotLeftOffset, this.plotUpperOffset))
       .call(yAxisGrid);
 
+  }
+
+  private drawExtras(): void {
+
+    this.extras.left.push(new TextExtra(ExtraPosition.Left, ['title', 'axis-title'], this._titles.y));
+    this.extras.bottom.push(new TextExtra(ExtraPosition.Bottom, ['title', 'axis-title'], this._titles.x));
+    this.extras.bottom.push(new TextExtra(ExtraPosition.Bottom, ['subtitle', 'axis-subtitle'], 'Horizontal axis sub-title'));
+
+    this.extras.top.push(new TextExtra(ExtraPosition.Top, ['subtitle', 'main-subtitle'], 'Sub-title'));
+
+    this.extras.left.push(new TextExtra(ExtraPosition.Left, ['subtitle', 'axis-title'], 'Vertical axis sub-title'));
+
+    this.extras.right.push(new TextExtra(ExtraPosition.Right, ['title', 'axis-title'], 'Thing on the right'));
+    this.extras.right.push(new TextExtra(ExtraPosition.Right, ['subtitle', 'axis-title'], 'Thing on the right 2'));
+
+    // Flatten all extras into one array.
+    const extras = _([this.extras.top, this.extras.bottom, this.extras.left, this.extras.right]).flatten().value();
+
+    let innerHeight = this.height;
+    let innerWidth = this.width;
+    let totalLeftOffset = 0;
+    let totalTopOffset = 0;
+    let offsets = {top: [0], right: [0], bottom: [0], left: [0]};
+
+    console.log(extras);
+
+    _.forEach(extras, (extra: Extra) => {
+        
+        extra.draw(this.svg);
+        
+        const height = extra.getRectangle().height;
+        if (extra.atTop() || extra.atBottom()) {
+            innerHeight -= height;
+        } else {
+            innerWidth -= height;
+        }
+
+        if (extra.atTop()) {
+            totalTopOffset += height;
+            offsets.top.push(height);
+        }
+
+        if (extra.atLeft()) {
+            totalLeftOffset += height;
+            offsets.left.push(height);
+        }
+
+        if (extra.atRight()) {
+            offsets.right.push(height);
+        }
+        
+        if (extra.atBottom()) {
+            offsets.bottom.push(height);
+        }
+           
+    });
+        
+    _.forEach(extras, (extra: Extra) => {
+        
+        const offset: ExtraOffset = {
+            top: totalTopOffset,
+            right: 0,
+            left: totalLeftOffset,
+            bottom: 0
+        };
+        
+        if (extra.atTop()) {
+            offset.top = offsets.top.shift();    
+        }
+        
+        if (extra.atLeft()) {
+            offset.left = offsets.left.shift();
+        }
+        
+        if (extra.atBottom()) {
+            offset.bottom = offsets.bottom.shift();
+        }
+        
+        if (extra.atRight()) {
+            offset.right = offsets.right.shift();
+        }
+        
+        extra.move(offset, innerWidth, innerHeight);
+        
+    });
+
+
+    this.svg.append('rect')
+        .attr({
+           'width': innerWidth,
+           'height': innerHeight,
+           'x': totalLeftOffset,
+           'y': totalTopOffset
+        })
+        .style('fill', '#d1d1d1');
+
+  }
+
+  private addTopExtra(extra: Extra): void {
+    this.extras.top.push(extra);
+  }
+
+  private addBottomExtra(extra: Extra): void {
+    this.extras.bottom.push(extra);
   }
 
 

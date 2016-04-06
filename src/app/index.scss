@@ -40,12 +40,21 @@ svg.plot {
   text {
     fill: $text-primary;
     font-family: Helvetica;
-    font-weight: bold;
     text-anchor: middle;
   }
 
   .title {
-    font-size: 12px;
+    font-weight: bold;
+    font-size: 13px;
+  }
+  
+  .main-title {
+      font-size: 15px;
+  }
+  
+  .subtitle {
+      fill: #555;
+      font-size: 12px;
   }
 
   .grid {
