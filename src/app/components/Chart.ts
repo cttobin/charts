@@ -12,21 +12,12 @@ import { Theme } from './Theme';
 import { Data } from './Data';
 
 import { getBox } from './utilities/getBox';
+import { translate } from './utilities/translate';
 
 
 import { Extra, ExtraOffset, ExtraPosition } from './extras/Extra';
 import { TextExtra } from './extras/TextExtra';
-
-
-/**
- * Generate SVG translation string.
- * @param x
- * @param y
- * @returns {string}
- */
-function translate(x: number, y: number): string {
-  return `translate(${x}, ${y})`;
-}
+import { Axis, AxisOrientation } from './extras/Axis';
 
 function setTransform(element: d3.Selection<SVGElement>, x: number, y: number): void {
   element.attr('transform', translate(x, y));
@@ -169,7 +160,7 @@ export class Chart {
   }
 
 
-  
+
   /**
    * Render the chart at the given selector.
    * @param  {string} selector
@@ -518,6 +509,10 @@ export class Chart {
 
   }
 
+  private getOffset(offsets: number[], size: number): number {
+      return size + (_.last(offsets) || 0);
+  }
+
   private drawExtras(): void {
 
     this.extras.left.push(new TextExtra(ExtraPosition.Left, ['title', 'axis-title'], this._titles.y));
@@ -531,6 +526,32 @@ export class Chart {
     this.extras.right.push(new TextExtra(ExtraPosition.Right, ['title', 'axis-title'], 'Thing on the right'));
     this.extras.right.push(new TextExtra(ExtraPosition.Right, ['subtitle', 'axis-title'], 'Thing on the right 2'));
 
+    this.scales.y = d3
+      .scale
+      .linear()
+      .domain(d3.extent(this.data.rows, (datum: {[index: string]: any}) => datum[this.mappings.y.name]))
+      .range([this.plotAreaHeight, 0]);
+
+    const domain = _(this.data.rows)
+        .map((row: any) => {
+          return row[this.mappings.x.name].toString();
+        })
+        .uniq()
+        .value();
+
+    this.scales.x = d3
+        .scale
+        .ordinal()
+        .domain(domain)
+        .rangeRoundBands([0, this.plotAreaWidth], 0.1);
+    
+    const xAxis = new Axis(ExtraPosition.Top, ['axis', 'x'], this.scales.x, this._ticks.x, this._ticksFormat.x);
+    this.extras.bottom.unshift(xAxis);
+
+    const yAxis = new Axis(ExtraPosition.Right, ['axis', 'y'], this.scales.y, this._ticks.y, this._ticksFormat.y);
+    this.extras.left.push(yAxis);
+
+
     // Flatten all extras into one array.
     const extras = _([this.extras.top, this.extras.bottom, this.extras.left, this.extras.right]).flatten().value();
 
@@ -543,11 +564,11 @@ export class Chart {
     console.log(extras);
 
     _.forEach(extras, (extra: Extra) => {
-        
+
         extra.draw(this.svg);
-        
+
         const size = extra.getSize();
-        console.log(size);
+
         if (extra.atTop() || extra.atBottom()) {
             innerHeight -= size;
         } else {
@@ -556,51 +577,51 @@ export class Chart {
 
         if (extra.atTop()) {
             totalTopOffset += size;
-            offsets.top.push(size);
+            offsets.top.push(this.getOffset(offsets.top, size));
         }
 
         if (extra.atLeft()) {
             totalLeftOffset += size;
-            offsets.left.push(size);
+            offsets.left.push(this.getOffset(offsets.left, size));
         }
 
         if (extra.atRight()) {
-            offsets.right.push(size);
+            offsets.right.push(this.getOffset(offsets.right, size));
         }
-        
+
         if (extra.atBottom()) {
-            offsets.bottom.push(size);
+            offsets.bottom.push(this.getOffset(offsets.bottom, size));
         }
-           
+
     });
-        
+
     _.forEach(extras, (extra: Extra) => {
-        
+
         const offset: ExtraOffset = {
             top: totalTopOffset,
             right: 0,
             left: totalLeftOffset,
             bottom: 0
         };
-        
+
         if (extra.atTop()) {
-            offset.top = offsets.top.shift();    
+            offset.top = offsets.top.shift();
         }
-        
+
         if (extra.atLeft()) {
             offset.left = offsets.left.shift();
         }
-        
+
         if (extra.atBottom()) {
             offset.bottom = offsets.bottom.shift();
         }
-        
+
         if (extra.atRight()) {
             offset.right = offsets.right.shift();
         }
-        
+
         extra.move(offset, innerWidth, innerHeight);
-        
+
     });
 
 

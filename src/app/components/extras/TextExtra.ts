@@ -1,10 +1,10 @@
-import { Extra, ExtraOffset } from './Extra';
+import { Extra, ExtraOffset, ExtraPosition } from './Extra';
 
 
 export class TextExtra extends Extra {
 
     constructor(position: number, className: string|string[], private text: string) {
-        super(position, className);
+        super(position, position === ExtraPosition.Left || position === ExtraPosition.Right, className);
     }
 
     protected drawElement(svg: d3.Selection<SVGElement>): d3.Selection<SVGElement> {

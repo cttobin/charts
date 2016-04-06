@@ -12,14 +12,14 @@ export interface ExtraOffset {
     left?: number;
 }
 
-const DEFAULT_PADDING: ExtraOffset = {top: 1, right: 1, bottom: 1, left: 1};
+const DEFAULT_PADDING: ExtraOffset = {top: 0, right: 0, bottom: 0, left: 0};
 
 export abstract class Extra {
 
   protected selection: d3.Selection<SVGElement>;
   protected padding: ExtraOffset;
 
-  constructor(public position: ExtraPosition, private className: string|string[]) {
+  constructor(public position: ExtraPosition, private rotated: boolean, private className: string|string[]) {
       this.padding = DEFAULT_PADDING;
   }
 
@@ -48,6 +48,7 @@ export abstract class Extra {
 
   /**
    * Get the dimensions and position of the element.
+   * @returns number
    */
   public getSize(): number {
       
@@ -56,9 +57,15 @@ export abstract class Extra {
       } else {
           
         const element = <SVGElement> this.selection.node();
-        const innerSize = element.getBoundingClientRect().height;
         
-        if (this.atTop() || this.atBottom()) {
+        let innerSize;
+        if (this.isHorizontal() || this.rotated) {
+            innerSize = element.getBoundingClientRect().height;
+        } else {
+            innerSize = element.getBoundingClientRect().width;
+        }
+        
+        if (this.isHorizontal()) {
             return innerSize + this.padding.top + this.padding.bottom;
         } else {
             return innerSize + this.padding.left + this.padding.right; 
@@ -67,6 +74,14 @@ export abstract class Extra {
       }
   }
 
+
+  public isHorizontal(): boolean {
+      return this.atTop() || this.atBottom();
+  }
+  
+  public isVertical(): boolean {
+      return this.atLeft() || this.atRight();
+  }
 
   /**
    * Is this element positioned at the top of the chart?
