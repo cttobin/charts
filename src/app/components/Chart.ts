@@ -546,29 +546,30 @@ export class Chart {
         
         extra.draw(this.svg);
         
-        const height = extra.getRectangle().height;
+        const size = extra.getSize();
+        console.log(size);
         if (extra.atTop() || extra.atBottom()) {
-            innerHeight -= height;
+            innerHeight -= size;
         } else {
-            innerWidth -= height;
+            innerWidth -= size;
         }
 
         if (extra.atTop()) {
-            totalTopOffset += height;
-            offsets.top.push(height);
+            totalTopOffset += size;
+            offsets.top.push(size);
         }
 
         if (extra.atLeft()) {
-            totalLeftOffset += height;
-            offsets.left.push(height);
+            totalLeftOffset += size;
+            offsets.left.push(size);
         }
 
         if (extra.atRight()) {
-            offsets.right.push(height);
+            offsets.right.push(size);
         }
         
         if (extra.atBottom()) {
-            offsets.bottom.push(height);
+            offsets.bottom.push(size);
         }
            
     });

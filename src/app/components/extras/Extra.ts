@@ -12,11 +12,16 @@ export interface ExtraOffset {
     left?: number;
 }
 
+const DEFAULT_PADDING: ExtraOffset = {top: 1, right: 1, bottom: 1, left: 1};
+
 export abstract class Extra {
 
   protected selection: d3.Selection<SVGElement>;
+  protected padding: ExtraOffset;
 
-  constructor(public position: ExtraPosition, private className: string|string[]) {}
+  constructor(public position: ExtraPosition, private className: string|string[]) {
+      this.padding = DEFAULT_PADDING;
+  }
 
   protected abstract drawElement(svg: d3.Selection<SVGElement>): d3.Selection<SVGElement>;
   public abstract move(offset: ExtraOffset, plotAreaWidth: number, plotAreaHeight: number): void;
@@ -44,12 +49,21 @@ export abstract class Extra {
   /**
    * Get the dimensions and position of the element.
    */
-  public getRectangle(): ClientRect {
+  public getSize(): number {
+      
       if (_.isNull(this.selection) || _.isUndefined(this.selection)) {
-          return null;
+          return 0;
       } else {
+          
         const element = <SVGElement> this.selection.node();
-        return element.getBoundingClientRect();
+        const innerSize = element.getBoundingClientRect().height;
+        
+        if (this.atTop() || this.atBottom()) {
+            return innerSize + this.padding.top + this.padding.bottom;
+        } else {
+            return innerSize + this.padding.left + this.padding.right; 
+        }
+        
       }
   }
 

@@ -27,33 +27,34 @@ export class TextExtra extends Extra {
 
     public move(offset: ExtraOffset, plotAreaWidth: number, plotAreaHeight: number): void {
 
+        const verticalCentre = (plotAreaHeight / 2) + offset.top;
+
         if (this.atTop()) {
             this.selection.attr({
                 'x': (plotAreaWidth / 2) + offset.left,
-                'y': offset.top,
+                'y': offset.top + this.padding.top,
                 'alignment-baseline': 'before-edge'
             });
         } else if (this.atBottom()) {
             this.selection.attr({
                 'x': (plotAreaWidth / 2) + offset.left,
-                'y': (offset.top + plotAreaHeight) + offset.bottom,
+                'y': offset.top + plotAreaHeight + offset.bottom - this.padding.bottom,
                 'alignment-baseline': 'before-edge'
             });
         } else if (this.atLeft()) {
-            const centre = (plotAreaHeight / 2) + offset.top;
+            const left = offset.left + this.padding.left;
             this.selection.attr({
-                'x': offset.left,
-                'y': centre,
-                'transform': `rotate(270, ${offset.left}, ${centre})`,
+                'x': left,
+                'y': verticalCentre,
+                'transform': `rotate(270, ${left}, ${verticalCentre})`,
                 'alignment-baseline': 'before-edge'
             });
         } else if (this.atRight()) {
-            const centre = (plotAreaHeight / 2) + offset.top;
-            const rightEdge = offset.left + plotAreaWidth + offset.right;
+            const rightEdge = offset.left + plotAreaWidth + offset.right + this.padding.right;
             this.selection.attr({
                 'x': rightEdge,
-                'y': centre,
-                'transform': `rotate(270, ${rightEdge}, ${centre})`,
+                'y': verticalCentre,
+                'transform': `rotate(270, ${rightEdge}, ${verticalCentre})`,
                 'alignment-baseline': 'before-edge'
             });
         }
