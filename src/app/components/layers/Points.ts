@@ -31,7 +31,7 @@ export class PointLayer extends Layer {
 
     super('points', false, false, chart, userParameters, {
 
-      'size': new ContinuousRangeScale(4, [2, 6]),
+      'size': new ContinuousRangeScale(4, [3, 8]),
       'fill': new OrdinalRangeScale(theme.swatch[1], theme.swatch, theme.gradient),
       'opacity': new ContinuousRangeScale(1, [0.1, 1]),
       'stroke': new OrdinalRangeScale(null, theme.swatch, theme.gradient)
