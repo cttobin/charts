@@ -15,7 +15,7 @@ export class Axis extends Extra {
                 private ticks: number,
                 private ticksFormat: (x: number) => string) {
                     
-        super(position, false, {top: 0, right: 0, bottom: 0, left: 0}, className);
+        super(position, false, className);
         
     }
 
