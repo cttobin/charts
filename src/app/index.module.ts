@@ -23,19 +23,26 @@ import { Data } from './components/Data';
 
   const department = PlotJS.mapping('department');
 
-  const chart = PlotJS.chart(rawData)
+  const chart = PlotJS.chart(rawData, {
+    
+  })
     .x(PlotJS.mapping('year'), {
-        
+      
     })
     .y(PlotJS.mapping('sales'), {
-        subtitle: '(Dolla)',
         format: PlotJS.labels.currency()
     })
-    .points({fill: PlotJS.mapping('department')})
-    .lines({stroke: PlotJS.mapping('department')})
+    .points({
+        fill: PlotJS.mapping('department'),
+        size: PlotJS.mapping('sales')
+    })
+    .lines({
+        stroke: PlotJS.mapping('department'),
+        dash: PlotJS.mapping('department')
+    })
     .title('Chart 2')
     .subtitle('Subtitle')
-    .draw('.chart-example');
+    .draw('.chart-1');
 
 })();
 

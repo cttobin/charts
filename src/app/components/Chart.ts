@@ -1,5 +1,5 @@
 import { LayerParameters } from './LayerParameters';
-import { ChartOptions } from './ChartOptions';
+import { ChartOptions, ChartCentre } from './ChartOptions';
 import { Mapping, Mappings } from './Mapping';
 
 import { Layer } from './layers/Layer';
@@ -102,10 +102,12 @@ export class Chart {
 
   constructor(data: any, chartOptions?: ChartOptions) {
 
-    const defaultChartOptions = {
+    const defaultChartOptions: ChartOptions = {
       titlePadding: 8,
       axisTitlePadding: 8,
-      axisPadding: 12
+      axisPadding: 12,
+      centreVertical: null,
+      centreHorizontal: null
     };
 
     this.animation = {
@@ -127,7 +129,7 @@ export class Chart {
             format: Chart.DEFAULT_TICK_FORMAT
         }
     };
-
+    
     // Overwrite default chart options with user options.
     this.chartOptions = _.assign(defaultChartOptions, chartOptions);
 
@@ -207,7 +209,7 @@ export class Chart {
             .rangeRoundBands([0, 1], 0.1);
 
         const xAxis = new Axis(position, ['axis', 'x'], axis.scale, axis.ticks, axis.format);
-        
+
         // Display the axis before or after the axis title depending on which side the axis is going
         // to be displayed.
         if (options.otherSide) {
@@ -225,7 +227,7 @@ export class Chart {
             .range([1, 0]);
 
         const yAxis = new Axis(position, ['axis', 'y'], axis.scale, axis.ticks, axis.format);
-        
+
         // Display the axis before or after the axis title depending on which side the axis is going
         // to be displayed.
         if (!options.otherSide) {
@@ -384,37 +386,37 @@ export class Chart {
    */
   public subtitle(titleText: string): Chart {
     const extra = new TextExtra(ExtraPosition.Top, ['subtitle', 'main-title'], titleText);
-    
+
     // Make sure the subtitle appears just after the main title. Otherwise it might appear after an
     // upper axis or something.
     if (_.isEmpty(this.extras.top)) {
-        
+
         // No extras have been added yet so just throw the subtitle in there on its own.
-        this.extras.top.push(extra);    
-        
+        this.extras.top.push(extra);
+
     } else {
-        
+
         // There are other extras, see if one if a main title.
         const titleIndex = _.findIndex(this.extras.top, (extra: Extra) => {
            return extra instanceof Extra && _.includes(extra.className, 'main-title');
         });
-        
+
         if (titleIndex !== -1) {
-            
+
             // Throw the subtitle under the main title.
             this.extras.top.splice(titleIndex + 1, 0, extra);
-                
+
         } else {
-            
+
             // Shove the subtitle on top of the other extras because they aren't main titles.
             this.extras.top.unshift(extra);
-            
+
         }
-        
+
     }
-    
+
     return this;
-    
+
   }
 
 
@@ -580,15 +582,18 @@ export class Chart {
     let totalTopOffset = 0;
     let offsets = {top: [0], right: [0], bottom: [0], left: [0]};
 
+    let totalText = {top: 0, right: 0, bottom: 0, left: 0};
+
     console.log(extras);
 
-    _.forEach(extras, (extra: Extra) => {
+    _.forEach(extras, (extra: Extra, index: number) => {
 
         extra.draw(this.svg);
 
-        const size = extra.getSize();
+        let size = extra.getSize();
+        const notAxis = !(extra instanceof Axis);
 
-        if (extra.atTop() || extra.atBottom()) {
+        if (extra.isHorizontal()) {
             innerHeight -= size;
         } else {
             innerWidth -= size;
@@ -611,8 +616,65 @@ export class Chart {
         if (extra.atBottom()) {
             offsets.bottom.push(this.getOffset(offsets.bottom, size));
         }
+        
+        if (notAxis) {
+            const positionName = getExtraPositionName(extra.position);
+            totalText[positionName] += size;
+        }
 
     });
+    
+    if (this.chartOptions.centreHorizontal === 'full') {
+        const rightWidth = this.width - totalLeftOffset - innerWidth;
+        if (rightWidth < totalLeftOffset) {
+            const difference = totalLeftOffset - rightWidth;
+            innerWidth -= difference;
+        } else {
+            
+        }
+    }
+    
+    
+    if (this.chartOptions.centreHorizontal === 'partial') {
+        
+        // The user wants to partially horizontally centre the chart. This means it will be centred
+        // horizontally ignoring axes. Therefore the loop above has been ingenously calculating the 
+        // width of each non-axis element. This can now be used to see how much bigger the left or 
+        // right is than each other and an adjustment can be made.
+        const difference = Math.abs(totalText.left - totalText.right);
+        innerWidth -= difference;
+        
+        // If the right side is wider, the left extras must be pushed left more to meet the plot 
+        // area. When the left side is wider the right side will take of it itself.
+        if (totalText.left < totalText.right) {
+            totalLeftOffset += difference;
+            offsets.left = _.map(offsets.left, (offset: number) => offset + difference);
+        }
+
+    }    
+
+    if (this.chartOptions.centreVertical === 'full') {
+
+        // Work out how much bigger the top or bottom is.
+        const bottomHeight = this.height - totalTopOffset - innerHeight;
+        if (bottomHeight < totalTopOffset) {
+            const difference = totalTopOffset - bottomHeight
+            innerHeight -= difference;
+        } else {
+            
+        }
+    }
+    
+    // Do the same as the partial horizontal centre heroics but for horizontal elements.
+    if (this.chartOptions.centreVertical === 'partial') {
+        const difference = Math.abs(totalText.bottom - totalText.top);
+        innerHeight -= difference;
+        if (totalText.top < totalText.bottom) {
+            totalTopOffset += difference;
+            offsets.top = _.map(offsets.top, (offset: number) => offset + difference);
+        }
+    }
+
 
     _.forEach(extras, (extra: Extra) => {
 
