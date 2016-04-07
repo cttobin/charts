@@ -1,5 +1,4 @@
 import { Extra, ExtraOffset, ExtraPosition } from './Extra';
-import { isOrdinalScale } from './../utilities/isOrdinalScale';
 import { translate } from './../utilities/translate';
 
 

@@ -204,8 +204,9 @@ export class Chart {
     // this.drawAxes();
     // this.drawPlotArea();
     // this.positionTitles();
-    // this.drawLayers();
+    
     this.drawExtras();
+    this.drawLayers();
 
     return this;
 
@@ -523,8 +524,8 @@ export class Chart {
 
     this.extras.left.push(new TextExtra(ExtraPosition.Left, ['subtitle', 'axis-title'], 'Vertical axis sub-title'));
 
-    this.extras.right.push(new TextExtra(ExtraPosition.Right, ['title', 'axis-title'], 'Thing on the right'));
-    this.extras.right.push(new TextExtra(ExtraPosition.Right, ['subtitle', 'axis-title'], 'Thing on the right 2'));
+    // this.extras.right.push(new TextExtra(ExtraPosition.Right, ['title', 'axis-title'], 'Thing on the right'));
+    // this.extras.right.push(new TextExtra(ExtraPosition.Right, ['subtitle', 'axis-title'], 'Thing on the right 2'));
 
     this.scales.y = d3
       .scale
@@ -545,12 +546,11 @@ export class Chart {
         .domain(domain)
         .rangeRoundBands([0, this.plotAreaWidth], 0.1);
     
-    const xAxis = new Axis(ExtraPosition.Top, ['axis', 'x'], this.scales.x, this._ticks.x, this._ticksFormat.x);
+    const xAxis = new Axis(ExtraPosition.Bottom, ['axis', 'x'], this.scales.x, this._ticks.x, this._ticksFormat.x);
     this.extras.bottom.unshift(xAxis);
 
-    const yAxis = new Axis(ExtraPosition.Right, ['axis', 'y'], this.scales.y, this._ticks.y, this._ticksFormat.y);
+    const yAxis = new Axis(ExtraPosition.Left, ['axis', 'y'], this.scales.y, this._ticks.y, this._ticksFormat.y);
     this.extras.left.push(yAxis);
-
 
     // Flatten all extras into one array.
     const extras = _([this.extras.top, this.extras.bottom, this.extras.left, this.extras.right]).flatten().value();
@@ -633,6 +633,15 @@ export class Chart {
            'y': totalTopOffset
         })
         .style('fill', '#d1d1d1');
+        
+    this.plotArea = this.svg
+      .append('g')
+      .attr({
+        'transform': translate(totalLeftOffset, totalTopOffset),
+        'class': 'plot-area'
+      });
+      
+    this.plotAreaWidth = innerWidth;
 
   }
 

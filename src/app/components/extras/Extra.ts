@@ -48,7 +48,6 @@ export abstract class Extra {
 
   /**
    * Get the dimensions and position of the element.
-   * @returns number
    */
   public getSize(): number {
       
@@ -75,10 +74,17 @@ export abstract class Extra {
   }
 
 
+  /**
+   * Is this element at the sides of the chart?
+   */
   public isHorizontal(): boolean {
       return this.atTop() || this.atBottom();
   }
   
+  
+  /**
+   * Is this element at the top or bottom of the chart?
+   */
   public isVertical(): boolean {
       return this.atLeft() || this.atRight();
   }
