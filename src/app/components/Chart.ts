@@ -17,7 +17,7 @@ import { translate } from './utilities/translate';
 
 import { Extra, ExtraOffset, ExtraPosition } from './extras/Extra';
 import { TextExtra } from './extras/TextExtra';
-import { Axis, AxisOrientation } from './extras/Axis';
+import { Axis } from './extras/Axis';
 
 function setTransform(element: d3.Selection<SVGElement>, x: number, y: number): void {
   element.attr('transform', translate(x, y));

@@ -50,26 +50,26 @@ export abstract class Extra {
    * Get the dimensions and position of the element.
    */
   public getSize(): number {
-      
+
       if (_.isNull(this.selection) || _.isUndefined(this.selection)) {
           return 0;
       } else {
-          
+
         const element = <SVGElement> this.selection.node();
-        
+
         let innerSize;
         if (this.isHorizontal() || this.rotated) {
             innerSize = element.getBoundingClientRect().height;
         } else {
             innerSize = element.getBoundingClientRect().width;
         }
-        
+
         if (this.isHorizontal()) {
             return innerSize + this.padding.top + this.padding.bottom;
         } else {
-            return innerSize + this.padding.left + this.padding.right; 
+            return innerSize + this.padding.left + this.padding.right;
         }
-        
+
       }
   }
 
@@ -80,8 +80,8 @@ export abstract class Extra {
   public isHorizontal(): boolean {
       return this.atTop() || this.atBottom();
   }
-  
-  
+
+
   /**
    * Is this element at the top or bottom of the chart?
    */
