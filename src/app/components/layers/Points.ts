@@ -48,8 +48,10 @@ export class PointLayer extends Layer {
 
     const parameterScales = <PointScales> this.parameterScales;
     const chart = this.chart;
-    const mappings = chart.mappings;
-    const xScale = chart.scales.x;
+    
+    const x = chart.axes.x;
+    const y = chart.axes.y;
+    const xScale = chart.axes.x.scale;
 
     if (isOrdinalScale(xScale)) {
       xScale.rangeRoundBands([xScale.rangeBand() / 2, chart.plotAreaWidth + (xScale.rangeBand() / 2)], 0.1);
@@ -73,8 +75,8 @@ export class PointLayer extends Layer {
           .append('circle')
           .attr({
             'r': parameterScales.size() + 3,
-            'cx': chart.scales.x(datum[mappings.x.name]),
-            'cy': chart.scales.y(datum[mappings.y.name]),
+            'cx': xScale(datum[x.mapping.name]),
+            'cy': y.scale(datum[y.mapping.name]),
             'class': this.tooltipClassName
           });
 
@@ -84,19 +86,19 @@ export class PointLayer extends Layer {
       })
       .attr({
         'r': parameterScales.size,
-        'cx': (datum: any) => chart.scales.x(datum[mappings.x.name])
+        'cx': (datum: any) => xScale(datum[x.mapping.name])
       });
 
     if (chart.isAnimated()) {
       const animation = chart.animation;
-      this.elements = this.elements.attr('cy', () => chart.scales.y(0))
+      this.elements = this.elements.attr('cy', () => y.scale(0))
         .transition()
         .duration(animation.duration)
         .ease(animation.easing)
         .delay(animation.delay);
     }
 
-    this.elements.attr('cy', (datum: any) => chart.scales.y(datum[mappings.y.name]));
+    this.elements.attr('cy', (datum: any) => y.scale(datum[y.mapping.name]));
 
   }
 

@@ -2,7 +2,7 @@ import { Extra, ExtraOffset, ExtraPosition } from './Extra';
 import { translate } from './../utilities/translate';
 
 
-type AxisOrientation = 'top' | 'right' | 'bottom' | 'left';
+export type AxisOrientation = 'top' | 'right' | 'bottom' | 'left';
 
 export class Axis extends Extra {
 

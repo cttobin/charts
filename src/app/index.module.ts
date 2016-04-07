@@ -23,38 +23,18 @@ import { Data } from './components/Data';
 
   const department = PlotJS.mapping('department');
 
-  // PlotJS.chart(rawData, {
-  //     x: PlotJS.mapping('year'),
-  //     y: PlotJS.mapping('sales'),
-  //     label: department
-  //   })
-  //   .ticksFormat({
-  //     y: PlotJS.labels.comma(),
-  //     x: PlotJS.labels.integer()
-  //   })
-  //   .lines({
-  //     stroke: department
-  //   })
-  //   .points({fill: department})
-  //   .titles({
-  //     main: 'What',
-  //     y: 'Total Sales'
-  //   })
-  //   .animate({delay: 250})
-  //   // .title('Chart Title')
-  //   .draw('.chart-1');
-
-  const chart = PlotJS.chart(_.filter(rawData, {'department': 'A'}), {
-      x: PlotJS.mapping('year'),
-      y: PlotJS.mapping('sales')
+  const chart = PlotJS.chart(rawData)
+    .x(PlotJS.mapping('year'), {
+        
     })
-    .ticksFormat({
-      y: PlotJS.labels.comma(),
-      x: PlotJS.labels.integer()
+    .y(PlotJS.mapping('sales'), {
+        subtitle: '(Dolla)',
+        format: PlotJS.labels.currency()
     })
     .points({fill: PlotJS.mapping('department')})
     .lines({stroke: PlotJS.mapping('department')})
     .title('Chart 2')
+    .subtitle('Subtitle')
     .draw('.chart-example');
 
 })();

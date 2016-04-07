@@ -2,9 +2,8 @@ import { Data } from './Data';
 
 
 export interface Mappings {
-  x: Mapping;
-  y: Mapping;
-  label?: Mapping;
+  x?: Mapping;
+  y?: Mapping;
 }
 
 export class Mapping {

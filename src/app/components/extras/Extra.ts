@@ -5,6 +5,19 @@ export enum ExtraPosition {
     Left
 }
 
+export function getExtraPositionName(position: ExtraPosition): string {
+    switch(position) {
+        case ExtraPosition.Top:
+            return 'top';
+        case ExtraPosition.Right:
+            return 'right';
+        case ExtraPosition.Bottom:
+            return 'bottom';
+        case ExtraPosition.Left:
+            return 'left';
+    }
+}
+
 export interface ExtraOffset {
     top?: number;
     right?: number;
@@ -19,7 +32,7 @@ export abstract class Extra {
   protected selection: d3.Selection<SVGElement>;
   protected padding: ExtraOffset;
 
-  constructor(public position: ExtraPosition, private rotated: boolean, private className: string|string[]) {
+  constructor(public position: ExtraPosition, private rotated: boolean, public className: string|string[]) {
       this.padding = DEFAULT_PADDING;
   }
 

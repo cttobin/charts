@@ -54,16 +54,18 @@ export class LineLayer extends Layer {
     let chart = this.chart;
     const parameterScales = super._generateScales(chart.data) as LineParameters;
     const interpolation = 'cardinal';
-    const xScale = chart.scales.x;
+    
+    const x = chart.axes.x;
+    const y = chart.axes.y;
+    const xScale = x.scale;
 
     if (isOrdinalScale(xScale)) {
       xScale.rangeRoundBands([xScale.rangeBand() / 2, chart.plotAreaWidth + (xScale.rangeBand() / 2)], 0.1);
     }
 
-
     const lineFunction = d3.svg.line()
-      .x((datum: any) => chart.scales.x(datum[chart.mappings.x.name]))
-      .y((datum: any) => chart.scales.y(datum[chart.mappings.y.name]))
+      .x((datum: any) => x.scale(datum[x.mapping.name]))
+      .y((datum: any) => y.scale(datum[y.mapping.name]))
       .interpolate(interpolation);
 
     // Assume the data has not been grouped and it should just
@@ -124,8 +126,8 @@ export class LineLayer extends Layer {
 
       // Before the animation begins, the line must have a starting position at the bottom of the chart.
       const initialLineFunction = d3.svg.line()
-        .x((datum: any) => chart.scales.x(datum[chart.mappings.x.name]))
-        .y(() => chart.scales.y(0))
+        .x((datum: any) => x.scale(datum[chart.mappings.x.name]))
+        .y(() => y.scale(0))
         .interpolate(interpolation);
 
       this.elements = this.elements

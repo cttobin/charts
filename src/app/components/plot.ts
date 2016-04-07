@@ -7,8 +7,8 @@ import { Data } from './Data';
 
 export const PlotJS = {
 
-  chart: function (data: any[], mappings: Mappings, chartOptions?: ChartOptions) {
-    return new Chart(data, mappings, chartOptions);
+  chart: function (data: any[], chartOptions?: ChartOptions) {
+    return new Chart(data, chartOptions);
   },
 
   mapping: function (field: string, definition?: { [index: string]: any } | { [index: number]: any | any[] }) {
