@@ -163,18 +163,34 @@ export class Chart {
   }
 
 
+
+  /**
+   * Horizontal axis settings.
+   * @param x        The mapping for the axis i.e. what variable it relates to.
+   * @param options  Axis settings like the side it's on.
+   */
   public x(x: Mapping, options?: AxisOptions): Chart {
     this.userAxes.x = options;
     this.mappings.x = x;
     return this;
   }
-
+  
+  
+  /**
+   * Vertical axis settings.
+   * @param y        The mapping for the axis i.e. what variable it relates to.
+   * @param options  Axis settings like the side it's on.
+   */
   public y(y: Mapping, options?: AxisOptions): Chart {
     this.userAxes.y = options;
     this.mappings.y = y;
     return this;
   }
-
+  
+  
+  /**
+   * Overwrite axis defaults.
+   */
   private updateAxis(name: string, mapping: Mapping, options?: AxisOptions): void {
 
     const axis: AxisDefinition = this.axes[name];
