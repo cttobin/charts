@@ -29,7 +29,7 @@ export class PointLayer extends Layer {
 
     const theme = chart.theme;
 
-    super('points', false, false, chart, userParameters, {
+    super('points', false, false, false, false, chart, userParameters, {
 
       'size': new ContinuousRangeScale(4, [3, 8]),
       'fill': new OrdinalRangeScale(theme.swatch[1], theme.swatch, theme.gradient),
@@ -44,7 +44,7 @@ export class PointLayer extends Layer {
     this.elements.remove();
   }
 
-  public draw(): void {
+  public draw(container: d3.Selection<SVGElement>): void {
 
     const parameterScales = <PointScales> this.parameterScales;
     const chart = this.chart;

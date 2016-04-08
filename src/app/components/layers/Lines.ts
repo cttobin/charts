@@ -22,7 +22,7 @@ export class LineLayer extends Layer {
 
     const theme = chart.theme;
 
-    super('lines', false, false, chart, userParameters, {
+    super('lines', false, false, false, false, chart, userParameters, {
 
       // Line thickness.
       'thickness': new ContinuousRangeScale(2, [1, 10]),
@@ -49,7 +49,7 @@ export class LineLayer extends Layer {
     this.elements.remove();
   }
 
-  draw(): void {
+  public draw(container: d3.Selection<SVGElement>): void {
 
     let chart = this.chart;
     const parameterScales = super._generateScales(chart.data) as LineParameters;

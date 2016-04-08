@@ -23,6 +23,7 @@ import { Data } from './components/Data';
 
   const department = PlotJS.mapping('department');
 
+  const subset = _.filter(rawData, {department: 'A'});
   const chart = PlotJS.chart(rawData, {
     
   })
@@ -32,13 +33,16 @@ import { Data } from './components/Data';
     .y(PlotJS.mapping('sales'), {
         format: PlotJS.labels.currency()
     })
-    .points({
-        fill: PlotJS.mapping('department'),
-        size: PlotJS.mapping('sales')
-    })
-    .lines({
-        stroke: PlotJS.mapping('department'),
-        dash: PlotJS.mapping('department')
+    // .points({
+    //     fill: PlotJS.mapping('department'),
+    //     size: PlotJS.mapping('sales')
+    // })
+    // .lines({
+    //     stroke: PlotJS.mapping('department'),
+    //     dash: PlotJS.mapping('department')
+    // })
+    .columns({
+        fill: PlotJS.mapping('department')
     })
     .title('Chart 2')
     .subtitle('Subtitle')

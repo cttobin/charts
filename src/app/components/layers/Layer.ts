@@ -18,10 +18,12 @@ export abstract class Layer {
   protected tooltipClassName: string;
   protected datumClassName: string;
 
-  abstract draw(): void;
+  abstract draw(container: d3.Selection<SVGElement>): void;
   abstract remove(): void;
 
   constructor(protected name: string,
+              public zeroX: boolean,
+              public zeroY: boolean,
               public ordinalXScale: boolean,
               public ordinalYScale: boolean,
               protected chart: Chart,
@@ -36,6 +38,14 @@ export abstract class Layer {
     this.parameterScales = this._generateScales(chart.data);
     this.tooltip = null;
 
+  }
+  
+  public drawLayer(): void {
+      
+    // Append a container for the layer elements.
+    const container = this.chart.plotArea.append('g').classed(this.className, true);
+    this.draw(container);
+    
   }
 
   protected _generateScales(data: Data): { [index: string]: () => string|number } {

@@ -448,7 +448,7 @@ export class Chart {
   private drawLayers(): void {
 
     _.forEach(this.layers, function (layer: Layer) {
-      layer.draw();
+      layer.drawLayer();
     });
 
   }
@@ -723,6 +723,7 @@ export class Chart {
       });
 
     this.plotAreaWidth = innerWidth;
+    this.plotAreaHeight = innerHeight;
 
   }
 
