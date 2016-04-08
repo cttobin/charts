@@ -71,6 +71,8 @@ export class Chart {
     public mappings: Mappings;
 
     public axes: {x: AxisDefinition, y: AxisDefinition};
+    public userAxes: {x: AxisDefinition, y: AxisDefinition};
+    
     public plotArea: d3.Selection<SVGElement>;
     public plotAreaHeight: number;
     public plotAreaWidth: number;
@@ -130,6 +132,8 @@ export class Chart {
         }
     };
     
+    this.userAxes = {x: {}, y: {}};
+    
     // Overwrite default chart options with user options.
     this.chartOptions = _.assign(defaultChartOptions, chartOptions);
 
@@ -160,12 +164,14 @@ export class Chart {
 
 
   public x(x: Mapping, options?: AxisOptions): Chart {
-    this.updateAxis('x', x, options);
+    this.userAxes.x = options;
+    this.mappings.x = x;
     return this;
   }
 
   public y(y: Mapping, options?: AxisOptions): Chart {
-    this.updateAxis('y', y, options);
+    this.userAxes.y = options;
+    this.mappings.y = y;
     return this;
   }
 
@@ -219,11 +225,19 @@ export class Chart {
         }
 
     } else {
-
+        
+        const zero = _(this.layers).filter((layer: Layer) => layer.zeroY).some();
+        const extent = d3.extent(this.data.rows, (datum: {[index: string]: any}) => datum[mapping.name]);
+        
+        // Force the axis to start at zero if any layer requires that.
+        if (extent[0] > 0 && zero) {
+            extent[0] = 0;
+        }
+         
         axis.scale = d3
             .scale
             .linear()
-            .domain(d3.extent(this.data.rows, (datum: {[index: string]: any}) => datum[mapping.name]))
+            .domain(extent)
             .range([1, 0]);
 
         const yAxis = new Axis(position, ['axis', 'y'], axis.scale, axis.ticks, axis.format);
@@ -261,6 +275,9 @@ export class Chart {
    * @returns Chart
    */
   public draw(selector: string): Chart {
+      
+      this.updateAxis('x', this.mappings.x, this.userAxes.x);
+      this.updateAxis('y', this.mappings.y, this.userAxes.y);
 
     if (_.isUndefined(this.mappings.x)) {
         throw new Error('"x" is not defined.')
