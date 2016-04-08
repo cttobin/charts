@@ -20,11 +20,13 @@ import { Data } from './components/Data';
     {'year': 2014, 'sales': 2175, 'department': 'B'},
     {'year': 2015, 'sales': 1276, 'department': 'B'}
   ];
+  
+  const rawData2 = [{"year":2010,"sales":0.0366,"department":"a","thing":"1"},{"year":2010,"sales":0.421,"department":"a","thing":"2"},{"year":2010,"sales":0.7185,"department":"b","thing":"1"},{"year":2010,"sales":0.0208,"department":"b","thing":"2"},{"year":2011,"sales":0.8002,"department":"a","thing":"1"},{"year":2011,"sales":0.51,"department":"a","thing":"2"},{"year":2011,"sales":0.284,"department":"b","thing":"1"},{"year":2011,"sales":0.7686,"department":"b","thing":"2"}] ;
 
   const department = PlotJS.mapping('department');
 
   const subset = _.filter(rawData, {department: 'A'});
-  const chart = PlotJS.chart(rawData, {
+  const chart = PlotJS.chart(subset, {
     
   })
     .x(PlotJS.mapping('year'), {
@@ -42,7 +44,7 @@ import { Data } from './components/Data';
     //     dash: PlotJS.mapping('department')
     // })
     .columns({
-        fill: PlotJS.mapping('department')
+        fill: department
     })
     .title('Chart 2')
     .subtitle('Subtitle')

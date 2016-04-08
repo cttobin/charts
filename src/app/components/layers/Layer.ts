@@ -39,13 +39,13 @@ export abstract class Layer {
     this.tooltip = null;
 
   }
-  
+
   public drawLayer(): void {
-      
+
     // Append a container for the layer elements.
     const container = this.chart.plotArea.append('g').classed(this.className, true);
     this.draw(container);
-    
+
   }
 
   protected _generateScales(data: Data): { [index: string]: () => string|number } {

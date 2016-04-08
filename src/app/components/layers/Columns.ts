@@ -2,7 +2,6 @@ import { Chart } from './../Chart';
 import { Layer, LayerNumberParameter, LayerStringParameter } from './Layer';
 import { LayerParameters } from './../LayerParameters';
 import { OrdinalRangeScale, ContinuousRangeScale } from './../Scale';
-import { isOrdinalScale } from './../utilities/isOrdinalScale';
 import { translate } from './../utilities/translate';
 
 
@@ -23,59 +22,100 @@ interface ColumnScales {
 
 
 export class ColumnLayer extends Layer {
-    
+
     private elements: any;
 
   constructor (chart: Chart, userParameters: LayerParameters) {
     let theme = chart.theme;
     super('columns', false, true, true, false, chart, userParameters, {
       'fill': new OrdinalRangeScale(theme.swatch[1], theme.swatch, theme.gradient),
-      'opacity': new ContinuousRangeScale(1, [0.1, 1]),
+      'opacity': new ContinuousRangeScale(1, [0.5, 1]),
       'stroke': new OrdinalRangeScale(null, theme.swatch, theme.gradient)
     });
   }
 
   public remove(): void {}
 
-  public draw(container: d3.Selection<SVGElement>) : void {
+  public draw(container: d3.Selection<SVGElement>): void {
 
     const chart = this.chart;
-    const mappings = chart.mappings;
     const parameterScales = <ColumnScales> this.parameterScales;
     const rows = chart.data.rows;
     const x = chart.axes.x;
     const y = chart.axes.y;
-    
-    const extent = d3.extent(chart.data.rows, (datum: any) => datum.department);
-    const innerScale = d3.scale.ordinal()
-        .domain(extent)
-        .rangeRoundBands([0, x.scale.rangeBand()], 0.05);
-    
-    const groups = _.toArray(_.groupBy(chart.data.rows, 'year'));
+
+    // See if there are scales that will cause the chart to be grouped.
+    const groupingScales = ['fill', 'stroke', 'opacity'];
+    const groupings = _.intersection(_.keys(this.userParameters), groupingScales);
+
+    const dummyGroupName = 'dummy';
+
+    // The inner group will be the variable that will be used to group the bars. If there is no such
+    // grouping required, the inner grouping variable will just be undefined.
+    let innerGroup;
+    if (groupings.length === 1) {
+        innerGroup = this.userParameters[groupings[0]].name;
+    } else if (groupings.length >= 2) {
+
+        // The charts need to be grouped by multiple fields. This is unlikely to have much practical
+        // use but this is the best charting library every created so it's better to handle it.
+        _.forEach(rows, (row: any) => {
+
+            // Extract the values for each group.
+            const group = _.map(groupings, (grouping: string) => {
+                const name = this.userParameters[grouping].name;
+                return row[name];
+            });
+
+            // Join the grouping values together to create a new dummy variable to group on. For
+            // example, if there are two variables to group on, A and B with values (a1, a2) and
+            // (b1, b2), a new field will be created on every row with the combined values with
+            // values "a1-b1", "a1-b2" etc.
+            row[dummyGroupName] = group.join('-');
+        });
+
+        innerGroup = dummyGroupName;
+
+    }
+
+    // The outer groups are the things that will contain each group. For example, if the chart is
+    // plotting X versus Y coloured by Z, where Z can one be one of two values "z1" or "z2", then
+    // the chart's x-axis will be arranged like [z1, z2], [z1, z2], [z1, z2]. To get the data in
+    // that format, it needs to be grouped by X (an outer group being one [z1, z2]).
+    const outerGroups = _.toArray(_.groupBy(rows, x.mapping.name));
     const outer = container
         .selectAll('g')
-        .data(groups)
+        .data(outerGroups)
         .enter()
         .append('g')
         .attr('transform', (datum: any) => translate(x.scale(datum[0][x.mapping.name]), 0));
-        
+
+    // Make another axis based on the groups. In the example above, this will be based on "Z", the
+    // colour of the bars. This is needed so that within in X group, the Z values can be positioned.
+    // If that makes sense, which it probably doesn't.
+    const innerExtent = _.uniq(_.map(rows, (datum: any) => datum[innerGroup]));
+    const innerScale = d3.scale.ordinal()
+        .domain(innerExtent)
+        .rangeRoundBands([0, x.scale.rangeBand()], groupings.length ? 0.05 : 0);
+
+    // Within each outer container, render the groups. Before this, the X axis will be displayed
+    // like [ ] [ ] [ ] and this bit will make it like [z1, z2], [z1, z2], [z1, z2].
     this.elements = outer.selectAll('rect')
-        .data(function (d) {
-            return d;
-        })
+        .data(_.identity)
         .enter()
         .append('rect')
         .attr({
             'class': this.datumClassName,
             'width': innerScale.rangeBand(),
-            'x': (datum: any) => innerScale(datum.department)  
+            'x': (datum: any) => innerScale(datum[innerGroup])
         })
         .style({
             'fill': parameterScales.fill,
             'stroke': parameterScales.stroke,
             'opacity': parameterScales.opacity
         });
-        
+
+    // Apply pre-animation positions and the animations settings if necessary.
     if (chart.isAnimated()) {
       const animation = chart.animation;
       this.elements = this.elements.attr({
@@ -88,80 +128,11 @@ export class ColumnLayer extends Layer {
         .delay(animation.delay);
     }
 
+    // Post-animation positions.
     this.elements.attr({
         'height': (datum: any) => this.chart.plotAreaHeight - y.scale(datum[y.mapping.name]),
         'y': (datum: any) => y.scale(datum[y.mapping.name])
     });
-
-    // // The chart's x-axis must be ordinal.
-    // let xScale = x.scale;
-    // if (!isOrdinalScale(xScale)) {
-    //   const uniqueValues = chart.data.fields[mappings.x.name].getUniqueValues();
-    //   xScale.ordinal()
-    //     .domain(uniqueValues)
-    //     .rangeRoundBands([0, chart.plotAreaWidth], 0.1);
-    // }
-
-    // // const xScale = chart._scales.x;
-
-    // // Assume the data has not been grouped and it should just be plotted as it was given originally.
-    // let group = false;
-
-    // // Parameters that will cause grouping.
-    // const groupingParameters = ['fill'];
-    // let columnData = [];
-
-    // // Check all grouping variables to see if any have been mapped.
-    // _.forEach(groupingParameters, (item: string) => {
-
-    //   // See if the grouping variable has been mapped by the user.
-    //   let mappingExists = _.includes(_.keys(this.userParameters), item);
-    //   if (!group && mappingExists) {
-
-    //     columnData = _(rows)
-    //       .groupBy(x.mapping.name)
-    //       .map(function (group: any[]) {
-
-    //         return _.map(group, function (datum: any, index: number) {
-
-    //           let previousDatum = datum[index - 1];
-    //           let previousValue = _.isUndefined(previousDatum) ? 0 : previousDatum[y.mapping.name];
-    //           return {
-    //             x: datum[x.mapping.name],
-    //             y: datum[y.mapping.name] + previousValue
-    //           };
-
-    //         });
-
-    //       })
-    //       .flatten()
-    //       .value();
-
-    //     // Found a group variable.
-    //     group = true;
-
-    //   }
-
-    // });
-
-    // this.chart.plotArea
-    //   .append('g')
-    //   .attr('class', this.className)
-    //   .selectAll('rect')
-    //   .data(columnData)
-    //   .enter()
-    //   .append('rect')
-    //   .attr({
-    //     'x': (datum: any) => xScale(datum.x),
-    //     'y': (datum: any) => y.scale(datum.y),
-    //     'width': xScale.rangeBand(),
-    //     'height': (datum: any) => y.scale(this.chart.plotAreaHeight) - y.scale(datum.y)
-    //   })
-    //   .style({
-    //     'fill': parameterScales.fill,
-    //     'stroke': parameterScales.stroke,
-    //     'opacity': parameterScales.opacity
-    //   });
 
   }
 
