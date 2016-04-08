@@ -91,15 +91,15 @@ export class ColumnLayer extends Layer {
         .attr('transform', (datum: any) => translate(x.scale(datum[0][x.mapping.name]), 0));
 
     // Make another axis based on the groups. In the example above, this will be based on "Z", the
-    // colour of the bars. This is needed so that within in X group, the Z values can be positioned.
-    // If that makes sense, which it probably doesn't.
+    // colour of the bars. This is needed so that within each X group, the Z values can be 
+    // positioned.
     const innerExtent = _.uniq(_.map(rows, (datum: any) => datum[innerGroup]));
     const innerScale = d3.scale.ordinal()
         .domain(innerExtent)
         .rangeRoundBands([0, x.scale.rangeBand()], groupings.length ? 0.05 : 0);
 
     // Within each outer container, render the groups. Before this, the X axis will be displayed
-    // like [ ] [ ] [ ] and this bit will make it like [z1, z2], [z1, z2], [z1, z2].
+    // like [ ] [ ] [ ] and this bit will make it like [z1, z2], [z1, z2].
     this.elements = outer.selectAll('rect')
         .data(_.identity)
         .enter()
