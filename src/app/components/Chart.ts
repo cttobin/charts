@@ -4,6 +4,7 @@ import { Mapping, Mappings } from './Mapping';
 
 import { Layer } from './layers/Layer';
 import { ColumnLayer } from './layers/Columns';
+import { StackedColumnLayer } from './layers/StackedColumns';
 import { LineLayer } from './layers/Lines';
 import { PointLayer, PointParameters } from './layers/Points';
 import { TextLayer } from './layers/TextLayer';
@@ -397,6 +398,17 @@ export class Chart {
    */
   public columns(parameters?: LayerParameters): Chart {
     this.layers.push(new ColumnLayer(this, parameters));
+    return this;
+  }
+  
+  
+  /**
+   * Vertical bars chart.
+   * @param parameters
+   * @returns {Chart}
+   */
+  public stackedColumns(parameters?: LayerParameters): Chart {
+    this.layers.push(new StackedColumnLayer(this, parameters));
     return this;
   }
 
