@@ -91,7 +91,7 @@ export class PointLayer extends Layer {
 
     if (chart.isAnimated()) {
       const animation = chart.animation;
-      this.elements = this.elements.attr('cy', () => y.scale(0))
+      this.elements = this.elements.attr('cy', y.scale.range()[0])
         .transition()
         .duration(animation.duration)
         .ease(animation.easing)
