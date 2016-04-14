@@ -23,7 +23,7 @@ interface PointScales {
 
 export class PointLayer extends Layer {
 
-  private elements: any;
+  private elements: d3.Transition<SVGElement>;
 
   constructor(chart: Chart, userParameters: PointParameters) {
 
@@ -44,7 +44,7 @@ export class PointLayer extends Layer {
     this.elements.remove();
   }
 
-  public draw(container: d3.Selection<SVGElement>): d3.Selection<SVGElement>|d3.Transition<SVGElement> {
+  public draw(container: d3.Selection<SVGElement>): d3.Transition<SVGElement> {
 
     const parameterScales = <PointScales> this.parameterScales;
     const chart = this.chart;
@@ -87,7 +87,9 @@ export class PointLayer extends Layer {
       .attr({
         'r': parameterScales.size,
         'cx': (datum: any) => xScale(datum[x.mapping.name])
-      });
+      })
+      .transition()
+      .duration(0);
 
     if (chart.isAnimated()) {
       const animation = chart.animation;

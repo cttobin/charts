@@ -35,13 +35,13 @@ import { Data } from './components/Data';
         .y(PlotJS.mapping('sales'), {
             format: PlotJS.labels.currency()
         })
-        // .points({
-        //     fill: PlotJS.mapping('department'),
-        //     size: PlotJS.mapping('sales')
-        // })
-        .columns({
-            fill: department
+        .points({
+            fill: PlotJS.mapping('department'),
+            size: PlotJS.mapping('sales')
         })
+        // .columns({
+        //     fill: department
+        // })
         // .animate(null)
         .title('Chart 2')
         .subtitle('Subtitle')

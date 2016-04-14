@@ -5,7 +5,7 @@ import { OrdinalRangeScale, ContinuousRangeScale } from './../Scale';
 import { translate } from './../utilities/translate';
 
 
-export interface StackedColumnParameters {
+export interface BarParameters {
     fill?: LayerStringParameter;
     opacity?: LayerNumberParameter;
     stroke?: LayerStringParameter;
@@ -14,23 +14,23 @@ export interface StackedColumnParameters {
 }
 
 
-interface StackedColumnScales {
+interface BarScales {
     fill: () => string;
     opacity: () => number;
     stroke: () => string;
 }
 
 
-export class StackedColumnLayer extends Layer {
+export class BarLayer extends Layer {
 
-    private elements: any;
-    
+    private elements: d3.Transition<SVGElement>;
+
     constructor(chart: Chart, userParameters: LayerParameters) {
         let theme = chart.theme;
         super('columns', false, true, true, false, chart, userParameters, {
-            'fill': new OrdinalRangeScale(theme.swatch[1], theme.swatch, theme.gradient),
-            'opacity': new ContinuousRangeScale(1, [0.2, 1]),
-            'stroke': new OrdinalRangeScale(null, theme.swatch, theme.gradient)
+            fill: new OrdinalRangeScale(theme.swatch[1], theme.swatch, theme.gradient),
+            opacity: new ContinuousRangeScale(1, [0.5, 1]),
+            stroke: new OrdinalRangeScale(null, theme.swatch, theme.gradient)
         });
     }
 
@@ -39,10 +39,10 @@ export class StackedColumnLayer extends Layer {
     public draw(container: d3.Selection<SVGElement>): d3.Transition<SVGElement> {
 
         const chart = this.chart;
-        const parameterScales = <StackedColumnScales>this.parameterScales;
+        const parameterScales = <BarScales>this.parameterScales;
         const rows = chart.data.rows;
-        const x = chart.axes.x;
-        const y = chart.axes.y;
+        const x = chart.axes.y;
+        const y = chart.axes.x;
 
         // See if there are scales that will cause the chart to be grouped.
         const groupingScales = ['fill', 'stroke', 'opacity'];
@@ -77,47 +77,44 @@ export class StackedColumnLayer extends Layer {
             innerGroup = dummyGroupName;
 
         }
-        
-        // Make sure the bars are always stacked in the same order.
-        const sortedRows = _.sortBy(rows, (datum: any) => datum[innerGroup]);
-        
-        // Calculate the height and y-coordinate for each bar.
-        _(sortedRows).groupBy(x.mapping.name)
-            .forOwn(function (group: any[], groupName: string) { 
-                
-                let innerGroupValues = [];
-                let previous = 0;
-                _.forEach(group, function (row: any) {
-                    const value = row[y.mapping.name] + previous;
-                    row.y = value;
-                    previous = value;
-                    innerGroupValues.push(row[innerGroup]);
-                });
-                
-                if (innerGroupValues.length != _.uniq(innerGroupValues).length) {
-                    throw new Error(`Invalid grouping parameter supplied. For example, where ` + 
-                        `"${x.mapping.name}" = ${groupName}, there are duplicate "${innerGroup}"` +
-                        ` values.`);
-                }
-                
-            });
-            
-        y.scale.domain([y.scale.domain()[0], d3.max(rows, (datum: any) => datum.y)]);
 
-        this.elements = chart.plotArea.selectAll('rect')
-            .data(sortedRows)
+        // The outer groups are the things that will contain each group. For example, if the chart is
+        // plotting X versus Y coloured by Z, where Z can one be one of two values "z1" or "z2", then
+        // the chart's x-axis will be arranged like [z1, z2], [z1, z2], [z1, z2]. To get the data in
+        // that format, it needs to be grouped by X (an outer group being one [z1, z2]).
+        const outerGroups = _.toArray(_.groupBy(rows, x.mapping.name));
+        const outer = container
+            .selectAll('g')
+            .data(outerGroups)
+            .enter()
+            .append('g')
+            .attr('transform', (datum: any) => translate(x.scale(datum[0][x.mapping.name]), 0));
+
+        // Make another axis based on the groups. In the example above, this will be based on "Z", the
+        // colour of the bars. This is needed so that within each X group, the Z values can be 
+        // positioned.
+        const innerExtent = _.uniq(_.map(rows, (datum: any) => datum[innerGroup]));
+        const innerScale = d3.scale.ordinal()
+            .domain(innerExtent)
+            .rangeRoundBands([0, x.scale.rangeBand()], groupings.length ? 0.05 : 0);
+
+        // Within each outer container, render the groups. Before this, the X axis will be displayed
+        // like [ ] [ ] [ ] and this bit will make it like [z1, z2], [z1, z2].
+        this.elements = outer.selectAll('rect')
+            .data(_.identity)
             .enter()
             .append('rect')
             .attr({
-                'class': (datum: any) => `${datum.year}-` + datum[innerGroup],
-                'width': x.scale.rangeBand(),
-                'x': (datum: any) => x.scale(datum[x.mapping.name])
+                'class': this.datumClassName,
+                'width': innerScale.rangeBand(),
+                'x': (datum: any) => innerScale(datum[innerGroup])
             })
             .style({
                 'fill': parameterScales.fill,
                 'stroke': parameterScales.stroke,
                 'opacity': parameterScales.opacity
-            });
+            })
+            .transition();
 
         // Apply pre-animation positions and the animations settings if necessary.
         if (chart.isAnimated()) {
@@ -126,7 +123,6 @@ export class StackedColumnLayer extends Layer {
                 'height': 0,
                 'y': y.scale.range()[0]
             })
-                .transition()
                 .duration(animation.duration)
                 .ease(animation.easing)
                 .delay(animation.delay);
@@ -134,8 +130,8 @@ export class StackedColumnLayer extends Layer {
 
         // Post-animation positions.
         this.elements.attr({
-            'height': (datum: any) => chart.plotAreaHeight - y.scale(datum[y.mapping.name]),
-            'y': (datum: any) => y.scale(datum.y)
+            'height': (datum: any) => this.chart.plotAreaHeight - y.scale(datum[y.mapping.name]),
+            'y': (datum: any) => y.scale(datum[y.mapping.name])
         });
         
         return this.elements;

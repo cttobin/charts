@@ -23,7 +23,7 @@ interface ColumnScales {
 
 export class ColumnLayer extends Layer {
 
-    private elements: any;
+    private elements: d3.Transition<SVGElement>;
 
     constructor(chart: Chart, userParameters: LayerParameters) {
         let theme = chart.theme;
@@ -36,7 +36,7 @@ export class ColumnLayer extends Layer {
 
     public remove(): void { }
 
-    public draw(container: d3.Selection<SVGElement>): d3.Selection<SVGElement>|d3.Transition<SVGElement> {
+    public draw(container: d3.Selection<SVGElement>): d3.Transition<SVGElement> {
 
         const chart = this.chart;
         const parameterScales = <ColumnScales>this.parameterScales;
@@ -100,7 +100,7 @@ export class ColumnLayer extends Layer {
 
         // Within each outer container, render the groups. Before this, the X axis will be displayed
         // like [ ] [ ] [ ] and this bit will make it like [z1, z2], [z1, z2].
-        this.elements = outer.selectAll('rect')
+        this.elements = <any> outer.selectAll('rect')
             .data(_.identity)
             .enter()
             .append('rect')

@@ -19,7 +19,7 @@ export abstract class Layer {
     protected datumClassName: string;
     private transitionsCompleted: number = 0;
 
-    abstract draw(container: d3.Selection<SVGElement>): d3.Selection<SVGElement> | d3.Transition<SVGElement>;
+    abstract draw(container: d3.Selection<SVGElement>): d3.Transition<SVGElement>;
     abstract remove(): void;
 
     constructor(protected name: string,
@@ -56,7 +56,7 @@ export abstract class Layer {
             // If the chart ain't animated there will be no transitions to watch.
             if (this.chart.isAnimated()) {
                 
-                (<d3.Transition<SVGElement>>elements).each('end', () => {
+                elements.each('end', () => {
 
                     // Wait for all elements to transition before calling the callback.
                     this.transitionsCompleted++;
