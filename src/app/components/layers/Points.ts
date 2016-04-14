@@ -44,7 +44,7 @@ export class PointLayer extends Layer {
     this.elements.remove();
   }
 
-  public draw(container: d3.Selection<SVGElement>): void {
+  public draw(container: d3.Selection<SVGElement>): d3.Selection<SVGElement>|d3.Transition<SVGElement> {
 
     const parameterScales = <PointScales> this.parameterScales;
     const chart = this.chart;
@@ -99,6 +99,7 @@ export class PointLayer extends Layer {
     }
 
     this.elements.attr('cy', (datum: any) => y.scale(datum[y.mapping.name]));
+    return this.elements;
 
   }
 

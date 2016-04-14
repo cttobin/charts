@@ -49,7 +49,7 @@ export class LineLayer extends Layer {
         this.elements.remove();
     }
 
-    public draw(container: d3.Selection<SVGElement>): void {
+    public draw(container: d3.Selection<SVGElement>): d3.Selection<SVGElement>|d3.Transition<SVGElement> {
 
         let chart = this.chart;
         const parameterScales = super._generateScales(chart.data) as LineParameters;
@@ -140,6 +140,7 @@ export class LineLayer extends Layer {
         }
 
         this.elements.attr('d', lineFunction);
+        return this.elements;
 
     }
 

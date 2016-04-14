@@ -36,7 +36,7 @@ export class StackedColumnLayer extends Layer {
 
     public remove(): void { }
 
-    public draw(container: d3.Selection<SVGElement>): void {
+    public draw(container: d3.Selection<SVGElement>): d3.Selection<SVGElement>|d3.Transition<SVGElement> {
 
         const chart = this.chart;
         const parameterScales = <StackedColumnScales>this.parameterScales;
@@ -137,6 +137,8 @@ export class StackedColumnLayer extends Layer {
             'height': (datum: any) => chart.plotAreaHeight - y.scale(datum[y.mapping.name]),
             'y': (datum: any) => y.scale(datum.y)
         });
+        
+        return this.elements;
 
     }
 

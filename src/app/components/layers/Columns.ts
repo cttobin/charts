@@ -36,7 +36,7 @@ export class ColumnLayer extends Layer {
 
     public remove(): void { }
 
-    public draw(container: d3.Selection<SVGElement>): void {
+    public draw(container: d3.Selection<SVGElement>): d3.Selection<SVGElement>|d3.Transition<SVGElement> {
 
         const chart = this.chart;
         const parameterScales = <ColumnScales>this.parameterScales;
@@ -133,6 +133,8 @@ export class ColumnLayer extends Layer {
             'height': (datum: any) => this.chart.plotAreaHeight - y.scale(datum[y.mapping.name]),
             'y': (datum: any) => y.scale(datum[y.mapping.name])
         });
+        
+        return this.elements;
 
     }
 

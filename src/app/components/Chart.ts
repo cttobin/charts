@@ -291,7 +291,7 @@ export class Chart {
    * @param  {string} selector
    * @returns Chart
    */
-  public draw(selector: string): Chart {
+  public draw(selector: string): Promise<{}> {
       
       this.updateAxis('x', this.mappings.x, this.userAxes.x);
       this.updateAxis('y', this.mappings.y, this.userAxes.y);
@@ -342,9 +342,7 @@ export class Chart {
     // this.positionTitles();
 
     this.drawExtras();
-    this.drawLayers();
-
-    return this;
+    return this.drawLayers();
 
   }
 
@@ -490,10 +488,18 @@ export class Chart {
    * Render all chart layers.
    * @private
    */
-  private drawLayers(): void {
-
-    _.forEach(this.layers, function (layer: Layer) {
-      layer.drawLayer();
+  private drawLayers(): Promise<{}> {
+    
+    let transitionsCompleted = 0;
+    return new Promise((resolve: () => any, reject: () => any) => {
+        _.forEach(this.layers, (layer: Layer) => {
+            layer.drawLayer(() => {
+                transitionsCompleted++;
+                if (transitionsCompleted === this.layers.length) {
+                    resolve();
+                }
+            });
+        });
     });
 
   }

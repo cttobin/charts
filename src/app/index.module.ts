@@ -39,12 +39,16 @@ import { Data } from './components/Data';
         //     fill: PlotJS.mapping('department'),
         //     size: PlotJS.mapping('sales')
         // })
-        .stackedColumns({
+        .columns({
             fill: department
         })
+        // .animate(null)
         .title('Chart 2')
         .subtitle('Subtitle')
-        .draw('.chart-1');
+        .draw('.chart-1')
+        .then(function () {
+            console.log('Done!');
+        });
 
 })();
 
