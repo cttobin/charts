@@ -1,6 +1,8 @@
+import { isOrdinalScale } from './../utilities/isOrdinalScale';
 import { Extra, ExtraOffset, ExtraPosition } from './Extra';
 import { translate } from './../utilities/translate';
 
+// TODO: Make sure the axis text isn't getting cut off/overflowing.
 
 export type AxisOrientation = 'top' | 'right' | 'bottom' | 'left';
 
@@ -26,6 +28,7 @@ export class Axis extends Extra {
             .scale(this.scale)
             .orient(orientation)
             .ticks(this.ticks)
+            .outerTickSize(0)
             .tickFormat(this.ticksFormat);
 
         const element = svg
@@ -48,7 +51,12 @@ export class Axis extends Extra {
 
         } else if (this.atBottom()) {
 
-            this.scale.rangeRoundBands([0, plotAreaWidth], 0.1);
+            if (isOrdinalScale(this.scale)) {
+                (<d3.scale.Ordinal<string, number>> this.scale).rangeRoundBands([0, plotAreaWidth], 0.1);    
+            } else {
+                this.scale.range([0, plotAreaWidth]);
+            }
+            
             this.axis.scale(this.scale);
             this.selection
                 .attr('transform', translate(offset.left, offset.top + plotAreaHeight + offset.bottom))
@@ -65,7 +73,12 @@ export class Axis extends Extra {
 
         } else if (this.atTop()) {
 
-            this.scale.rangeRoundBands([0, plotAreaWidth], 0.1);
+            if (isOrdinalScale(this.scale)) {
+                (<d3.scale.Ordinal<string, number>> this.scale).rangeRoundBands([0, plotAreaWidth], 0.1);    
+            } else {
+                this.scale.range([0, plotAreaWidth]);
+            }
+            
             this.axis.scale(this.scale);
             this.selection
                 .attr('transform', translate(offset.left, offset.top + this.getSize()))

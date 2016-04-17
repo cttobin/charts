@@ -27,6 +27,17 @@ export class DataField {
   isContinuous(): boolean {
     return this.type === DataFieldType.Continuous;
   }
+  
+  
+  /**
+   * Is the field a date field?
+   * @returns {boolean}
+   */
+  isDate(): boolean {
+    return this.type === DataFieldType.Date;
+  }
+
+
 
   getUniqueValues(): any[] {
     if (_.isUndefined(this.uniqueValues)) {

@@ -25,6 +25,12 @@ function setTransform(element: d3.Selection<SVGElement>, x: number, y: number): 
     element.attr('transform', translate(x, y));
 }
 
+ 
+export type LinearScale = d3.scale.Linear<number, number>|d3.scale.Ordinal<number, number>|d3.scale.Pow<number, number>;
+export type OrdinalScale = d3.scale.Ordinal<string, number>;
+export type AnyScale = LinearScale|d3.scale.Ordinal<any, number>;
+
+
 
 interface ChartTitles {
     x?: string;
@@ -51,10 +57,11 @@ interface AnimationOptions {
 // Options the user can set for an axis.
 interface AxisOptions {
     ticks?: number;
-    format?: (x: number) => string;
+    format?: (x: number|string|Date) => string;
     title?: string;
     subtitle?: string;
     otherSide?: boolean;
+    scale?: d3.scale.Linear<any, any>|d3.scale.Ordinal<any, any>|d3.scale.Pow<any, any>;
 }
 
 interface AxisDefinition extends AxisOptions {
@@ -219,20 +226,11 @@ export class Chart {
             extras.push(new TextExtra(position, ['subtitle', 'axis-title'], options.subtitle));
         }
 
+        const dataField = this.data.fields[mapping.name];
+
         if (name === 'x') {
-
-            const domain = _(this.data.rows)
-                .map((row: any) => row[mapping.name].toString())
-                .uniq()
-                .value();
-
-            axis.scale = d3
-                .scale
-                .ordinal()
-                .domain(domain)
-                .rangeRoundBands([0, 1], 0.1);
-
-            const xAxis = new Axis(position, ['axis', 'x'], axis.scale, axis.ticks, axis.format);
+            
+            const xAxis = this.createAxis(axis, options.scale, mapping, position);
 
             // Display the axis before or after the axis title depending on which side the axis is going
             // to be displayed.
@@ -243,22 +241,8 @@ export class Chart {
             }
 
         } else {
-
-            const zero = _(this.layers).filter((layer: Layer) => layer.zeroY).some();
-            const extent = d3.extent(this.data.rows, (datum: { [index: string]: any }) => datum[mapping.name]);
-
-            // Force the axis to start at zero if any layer requires that.
-            if (extent[0] > 0 && zero) {
-                extent[0] = 0;
-            }
-
-            axis.scale = d3
-                .scale
-                .linear()
-                .domain(extent)
-                .range([1, 0]);
-
-            const yAxis = new Axis(position, ['axis', 'y'], axis.scale, axis.ticks, axis.format);
+            
+            const yAxis = this.createAxis(axis, options.scale, mapping, position);
 
             // Display the axis before or after the axis title depending on which side the axis is going
             // to be displayed.
@@ -274,6 +258,59 @@ export class Chart {
         const positionName = getExtraPositionName(position);
         this.extras[positionName] = this.extras[positionName].concat(extras);
 
+    }
+    
+    private createAxis(axis: AxisDefinition, scale: AnyScale, mapping: Mapping, position: ExtraPosition): Axis {
+        
+        const dataField = this.data.fields[mapping.name];
+        const zero = _(this.layers).filter((layer: Layer) => layer.zeroY).some();
+        const extent = d3.extent(this.data.rows, (datum: { [index: string]: any }) => datum[mapping.name]);
+        
+        // Force the axis to start at zero if any layer requires that.
+        if (extent[0] > 0 && zero) {
+            extent[0] = 0;
+        }
+
+        if (dataField.isOrdinal()) {
+            
+        } else if (dataField.isDate()) {
+            
+            if (scale) {
+                
+                
+                
+            } else {
+                
+                axis.scale = d3.time
+                    .scale()
+                    .domain(extent)
+                    .nice()
+                    .range([1, 0]);
+                
+            }
+            
+        } else {
+            
+            if (scale) {
+                
+                axis.scale = (<LinearScale> scale)
+                    .domain(extent)
+                    .range([1, 0]);
+                
+            } else {
+                
+                axis.scale = d3
+                    .scale
+                    .linear()
+                    .domain(extent)
+                    .range([1, 0]);
+                    
+            }
+            
+        }
+        
+        return new Axis(position, ['axis', 'y'], axis.scale, axis.ticks, axis.format);
+        
     }
 
 
