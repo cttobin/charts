@@ -28,7 +28,7 @@ export class LineLayer extends Layer {
             'thickness': new ContinuousRangeScale(2, [1, 10]),
 
             // Line shape.
-            'interpolate': new StaticRangeScale('linear', ['linear', 'linear-closed', 'step-before', 'step-after', 'basis', 'basis-open', 'basis-closed', 'bundle', 'cardinal', 'cardinal-open', 'cardinal-closed', 'monotone']),
+            'interpolate': new StaticRangeScale('cardinal', ['linear', 'linear-closed', 'step-before', 'step-after', 'basis', 'basis-open', 'basis-closed', 'bundle', 'cardinal', 'cardinal-open', 'cardinal-closed', 'monotone']),
 
             // Dotted line or whatever.
             'dash': new OrdinalRangeScale('0', ['0', '4, 4', '2, 2'], ['0', '4, 4']),
@@ -53,7 +53,7 @@ export class LineLayer extends Layer {
 
         let chart = this.chart;
         const parameterScales = super._generateScales(chart.data) as LineParameters;
-        const interpolation = 'cardinal';
+        const interpolation = parameterScales.interpolate();
 
         const x = chart.axes.x;
         const y = chart.axes.y;

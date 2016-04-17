@@ -171,7 +171,7 @@ export abstract class Layer {
 
                 // The parameter value is just a fixed/constant value. Make sure it's suitable.
                 if (scaleObject instanceof StaticRangeScale && !scaleObject.isValueValid(parameter)) {
-                    throw new Error(`"${parameter}" is not a valid value for "${parameterName}".`);
+                    throw new Error(`"${parameter}" is not a valid value for "${parameterName}". Please choose from ${orList(scaleObject.validValues)}.`);
                 }
 
                 parameterScale = _.constant(parameter);
