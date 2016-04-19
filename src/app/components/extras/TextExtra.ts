@@ -1,4 +1,4 @@
-import { Extra, ExtraOffset, ExtraPosition } from './Extra';
+import { Extra, ExtraOffset, ExtraPosition, ExtraBooleans, ExtraSize } from './Extra';
 
 
 export class TextExtra extends Extra {
@@ -60,5 +60,32 @@ export class TextExtra extends Extra {
         }
 
     }
+    
+    
+    protected getSize(otherExtras: ExtraBooleans): ExtraSize {
+
+      if (_.isNull(this.selection) || _.isUndefined(this.selection)) {
+          
+          return {width: 0, height: 0, topOffset: 0, leftOffset: 0};
+          
+      } else {
+
+        const element = <SVGElement> this.selection.node();
+
+        let innerSize;
+        if (this.isHorizontal() || this.rotated) {
+            innerSize = element.getBoundingClientRect().height;
+        } else {
+            innerSize = element.getBoundingClientRect().width;
+        }
+
+        if (this.isHorizontal()) {
+            return {height: innerSize + this.padding.top + this.padding.bottom, width: 0, topOffset: 0, leftOffset: 0};
+        } else {
+            return {width: innerSize + this.padding.left + this.padding.right, height: 0, topOffset: 0, leftOffset: 0};
+        }
+
+      }
+  }
 
 }

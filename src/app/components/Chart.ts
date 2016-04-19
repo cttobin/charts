@@ -17,7 +17,7 @@ import { getBox } from './utilities/getBox';
 import { translate } from './utilities/translate';
 
 
-import { Extra, ExtraOffset, ExtraPosition, getExtraPositionName } from './extras/Extra';
+import { Extra, ExtraOffset, ExtraPosition, getExtraPositionName, ExtraArrays, ExtraBooleans } from './extras/Extra';
 import { TextExtra } from './extras/TextExtra';
 import { Axis } from './extras/Axis';
 
@@ -103,12 +103,7 @@ export class Chart {
     private plotUpperOffset: number;
     private plotLeftOffset: number;
 
-    private extras: {
-        top: Extra[];
-        bottom: Extra[];
-        left: Extra[];
-        right: Extra[];
-    };
+    private extras: ExtraArrays;
 
 
     constructor(data: any, chartOptions?: ChartOptions) {
@@ -230,7 +225,7 @@ export class Chart {
 
         if (name === 'x') {
             
-            const xAxis = this.createAxis(axis, options.scale, mapping, position);
+            const xAxis = this.createAxis(axis, options.scale, mapping, position, name);
 
             // Display the axis before or after the axis title depending on which side the axis is going
             // to be displayed.
@@ -242,7 +237,7 @@ export class Chart {
 
         } else {
             
-            const yAxis = this.createAxis(axis, options.scale, mapping, position);
+            const yAxis = this.createAxis(axis, options.scale, mapping, position, name);
 
             // Display the axis before or after the axis title depending on which side the axis is going
             // to be displayed.
@@ -260,7 +255,7 @@ export class Chart {
 
     }
     
-    private createAxis(axis: AxisDefinition, scale: AnyScale, mapping: Mapping, position: ExtraPosition): Axis {
+    private createAxis(axis: AxisDefinition, scale: AnyScale, mapping: Mapping, position: ExtraPosition, name: string): Axis {
         
         const dataField = this.data.fields[mapping.name];
         const zero = _(this.layers).filter((layer: Layer) => layer.zeroY).some();
@@ -309,7 +304,7 @@ export class Chart {
             
         }
         
-        return new Axis(position, ['axis', 'y'], axis.scale, axis.ticks, axis.format);
+        return new Axis(position, ['axis', name], axis.scale, axis.ticks, axis.format);
         
     }
 
@@ -683,43 +678,46 @@ export class Chart {
         let offsets = { top: [0], right: [0], bottom: [0], left: [0] };
 
         let totalText = { top: 0, right: 0, bottom: 0, left: 0 };
-
-        console.log(extras);
+        
+        // See if there are extras on each side. This can affect the positioning of some extras. For
+        // example, axis labels may flow off the chart. By kindly informing an axis that there are 
+        // no more elements beside it to flow into, it can adjust its width back so its labels do 
+        // not overflow its own container.
+        const otherExtras = _.mapValues(this.extras, function(value: Extra, name: string): boolean {
+            return !_.isEmpty(value);
+        });
 
         _.forEach(extras, (extra: Extra, index: number) => {
 
-            extra.draw(this.svg);
-
-            let size = extra.getSize();
+            let size = extra.draw(this.svg, <any> otherExtras);
             const notAxis = !(extra instanceof Axis);
-
-            if (extra.isHorizontal()) {
-                innerHeight -= size;
-            } else {
-                innerWidth -= size;
-            }
-
+            
+            innerHeight -= size.height;
+            innerWidth -= size.width;
+            totalTopOffset += size.topOffset;
+            totalLeftOffset += size.leftOffset;
+            
             if (extra.atTop()) {
-                totalTopOffset += size;
-                offsets.top.push(this.getOffset(offsets.top, size));
+                totalTopOffset += size.height;
+                offsets.top.push(this.getOffset(offsets.top, size.height));
             }
 
             if (extra.atLeft()) {
-                totalLeftOffset += size;
-                offsets.left.push(this.getOffset(offsets.left, size));
+                totalLeftOffset += size.width;
+                offsets.left.push(this.getOffset(offsets.left, size.width));
             }
 
             if (extra.atRight()) {
-                offsets.right.push(this.getOffset(offsets.right, size));
+                offsets.right.push(this.getOffset(offsets.right, size.width));
             }
 
             if (extra.atBottom()) {
-                offsets.bottom.push(this.getOffset(offsets.bottom, size));
+                offsets.bottom.push(this.getOffset(offsets.bottom, size.height));
             }
 
             if (notAxis) {
                 const positionName = getExtraPositionName(extra.position);
-                totalText[positionName] += size;
+                totalText[positionName] += size.width;
             }
 
         });
