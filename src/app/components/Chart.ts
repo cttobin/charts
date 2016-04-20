@@ -28,7 +28,7 @@ function setTransform(element: d3.Selection<SVGElement>, x: number, y: number): 
  
 export type LinearScale = d3.scale.Linear<number, number>|d3.scale.Ordinal<number, number>|d3.scale.Pow<number, number>;
 export type OrdinalScale = d3.scale.Ordinal<string, number>;
-export type AnyScale = LinearScale|d3.scale.Ordinal<any, number>;
+export type AnyScale = LinearScale|d3.scale.Ordinal<any, number>|d3.time.Scale<number, number>;
 
 
 
@@ -61,7 +61,7 @@ interface AxisOptions {
     title?: string;
     subtitle?: string;
     otherSide?: boolean;
-    scale?: d3.scale.Linear<any, any>|d3.scale.Ordinal<any, any>|d3.scale.Pow<any, any>;
+    scale?: AnyScale;
 }
 
 interface AxisDefinition extends AxisOptions {
@@ -202,7 +202,7 @@ export class Chart {
         axis.mapping = mapping;
         this.mappings[name] = mapping;
 
-        // Set default title if none has been provided.
+        // Set default axis title if none has been provided.
         const title = _.has(options, 'title') ? options.title : _.capitalize(mapping.name);
 
         // Work out what side to render the axis and axis title(s).
@@ -221,14 +221,12 @@ export class Chart {
             extras.push(new TextExtra(position, ['subtitle', 'axis-title'], options.subtitle));
         }
 
-        const dataField = this.data.fields[mapping.name];
-
         if (name === 'x') {
             
             const xAxis = this.createAxis(axis, options.scale, mapping, position, name);
 
-            // Display the axis before or after the axis title depending on which side the axis is going
-            // to be displayed.
+            // Display the axis before or after the axis title depending on which side the axis is 
+            // going to be displayed.
             if (options.otherSide) {
                 extras.push(xAxis);
             } else {
@@ -239,8 +237,8 @@ export class Chart {
             
             const yAxis = this.createAxis(axis, options.scale, mapping, position, name);
 
-            // Display the axis before or after the axis title depending on which side the axis is going
-            // to be displayed.
+            // Display the axis before or after the axis title depending on which side the axis is 
+            // going to be displayed.
             if (!options.otherSide) {
                 extras.push(yAxis);
             } else {
@@ -272,7 +270,10 @@ export class Chart {
             
             if (scale) {
                 
-                
+                axis.scale = (<d3.time.Scale<number, number>>scale)
+                    .nice()
+                    .domain(extent)
+                    .range([1, 0]);
                 
             } else {
                 
@@ -669,7 +670,7 @@ export class Chart {
     private drawExtras(): void {
 
         // Flatten all extras into one array.
-        const extras = _([this.extras.top, this.extras.bottom, this.extras.left, this.extras.right]).flatten().value();
+        const extras = _.flatten([this.extras.top, this.extras.bottom, this.extras.left, this.extras.right]);
 
         let innerHeight = this.height;
         let innerWidth = this.width;
@@ -689,7 +690,7 @@ export class Chart {
 
         _.forEach(extras, (extra: Extra, index: number) => {
 
-            let size = extra.draw(this.svg, <any> otherExtras);
+            const size = extra.draw(this.svg, <any> otherExtras);
             const notAxis = !(extra instanceof Axis);
             
             innerHeight -= size.height;

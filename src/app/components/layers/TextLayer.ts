@@ -20,7 +20,7 @@ export class TextLayer extends Layer {
 
     const theme = chart.theme;
 
-    super('text', false, false, chart, userParameters, {
+    super('text', false, false, false, false, chart, userParameters, {
 
       'size': new ContinuousRangeScale(20, [2, 6]),
       'fill': new OrdinalRangeScale(theme.swatch[1], theme.swatch, theme.gradient),

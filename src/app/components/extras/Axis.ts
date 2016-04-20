@@ -123,9 +123,9 @@ export class Axis extends Extra {
                 innerSize = element.getBoundingClientRect().width;
             }
 
+            let labelOverflow = 0;
             if (this.isHorizontal()) {
-
-                let labelOverflow = 0;
+                
                 let leftOffset = 0;
                 if (!otherExtras.right) {
                     labelOverflow += this.calculateLabelOverflow(_.last, 'width');
@@ -145,7 +145,6 @@ export class Axis extends Extra {
 
             } else {
 
-                let labelOverflow = 0;
                 let topOffset = 0;
                 if (!otherExtras.top) {
                     labelOverflow += this.calculateLabelOverflow(_.first, 'height');
@@ -168,7 +167,15 @@ export class Axis extends Extra {
         }
 
     }
+    
 
+    /**
+     * Calculate how far past the chart extent an axis label goes. This might be needed to adjust 
+     * the axis back a bit to stop overflowing.
+     * @param selector  A function to select an item from the array of labels that will be found.
+     * @param dimension The name of the dimension to measure ('height' or 'width').
+     * @returns         Half of the height or width of the selected label element. 
+     */
     private calculateLabelOverflow(selector: (x: any) => HTMLElement, dimension: string): number {
         const labels = this.selection.selectAll('text')[0];
         const lastLabel = selector(labels).getBoundingClientRect();
