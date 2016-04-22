@@ -203,7 +203,7 @@ export class Chart {
         this.mappings[name] = mapping;
 
         // Set default axis title if none has been provided.
-        const title = _.has(options, 'title') ? options.title : _.capitalize(mapping.name);
+        const title = _.has(options, 'title') ? options.title : this.formatTitle(mapping.name);
 
         // Work out what side to render the axis and axis title(s).
         let position: ExtraPosition;
@@ -266,6 +266,18 @@ export class Chart {
 
         if (dataField.isOrdinal()) {
             
+            // Find the unique values in the domain.
+            const domain = _(this.data.rows)
+                .map((row: any) => row[mapping.name].toString())
+                .uniq()
+                .value();
+
+            axis.scale = d3
+                .scale
+                .ordinal()
+                .domain(domain)
+                .rangeRoundBands([0, 1], 0.1);
+            
         } else if (dataField.isDate()) {
             
             if (scale) {
@@ -280,7 +292,6 @@ export class Chart {
                 axis.scale = d3.time
                     .scale()
                     .domain(extent)
-                    .nice()
                     .range([1, 0]);
                 
             }
@@ -291,15 +302,15 @@ export class Chart {
                 
                 axis.scale = (<LinearScale> scale)
                     .domain(extent)
-                    .range([1, 0]);
+                    .range([100, 0]);
                 
             } else {
                 
-                axis.scale = d3
-                    .scale
+                axis.scale = d3.scale
                     .linear()
                     .domain(extent)
-                    .range([1, 0]);
+                    .nice(axis.ticks)
+                    .range([0, 100]);
                     
             }
             
@@ -509,27 +520,6 @@ export class Chart {
 
 
     /**
-     * Set the main, axes and other titles.
-     * @param _titles
-     * @returns {Chart}
-     */
-    //   public titles(_titles: ChartTitles): Chart {
-    //     Chart.replaceDefaults(this._titles, _titles);
-    //     return this;
-    //   }
-
-    //   public ticks(numberOfTicks: ChartTicks): Chart {
-    //     Chart.replaceDefaults(this._ticks, numberOfTicks);
-    //     return this;
-    //   }
-
-    //   public ticksFormat(formats: ChartTicksFormat): Chart {
-    //     Chart.replaceDefaults(this._ticksFormat, formats);
-    //     return this;
-    //   }
-
-
-    /**
      * Render all chart layers.
      * @private
      */
@@ -548,90 +538,6 @@ export class Chart {
         });
 
     }
-
-    //   private drawAxes(): void {
-
-    //     this.scales.y = d3
-    //       .scale
-    //       .linear()
-    //       .domain(d3.extent(this.data.rows, (datum: {[index: string]: any}) => datum[this.mappings.y.name]))
-    //       .range([this.plotAreaHeight, 0]);
-
-    //     this.yAxis = d3.svg.axis()
-    //       .scale(this.scales.y)
-    //       .orient('left')
-    //       .ticks(this._ticks.y)
-    //       .tickFormat(this._ticksFormat.y);
-
-    //     const yAxisElement = this.svg
-    //       .append('g')
-    //       .attr('class', 'y axis')
-    //       .call(this.yAxis);
-
-    //     // Remove y-axis from available plot width.
-    //     this.plotAreaWidth -= getBox(yAxisElement).width;
-
-    //     if (_.some(_.map(this.layers, 'ordinalXScale'))) {
-
-    //       const domain = _(this.data.rows)
-    //         .map((row: any) => {
-    //           return row[this.mappings.x.name].toString();
-    //         })
-    //         .uniq()
-    //         .value();
-
-    //       this.scales.x = d3
-    //         .scale
-    //         .ordinal()
-    //         .domain(domain)
-    //         .rangeRoundBands([0, this.plotAreaWidth], 0.1);
-
-    //     } else {
-
-    //       this.scales.x = d3
-    //         .scale
-    //         .linear()
-    //         .domain(d3.extent(this.data.rows, (datum: {[index: string]: any}) => datum[this.mappings.x.name]))
-    //         .range([0, this.plotAreaWidth]);
-
-    //     }
-
-    //     this.xAxis = d3.svg.axis()
-    //       .scale(this.scales.x)
-    //       .orient('bottom')
-    //       .ticks(this._ticks.x)
-    //       .tickFormat(this._ticksFormat.x);
-
-    //     // Add x-axis to chart.
-    //     const xAxisElement = this.svg
-    //       .append('g')
-    //       .attr('class', 'x axis')
-    //       .call(this.xAxis);
-
-    //     // Subtract x-axis height and overflow width from allowable area.
-    //     const xAxisBox = getBox(xAxisElement);
-    //     this.plotAreaHeight -= xAxisBox.height;
-    //     this.plotAreaWidth -= this.chartOptions.axisTitlePadding + ((xAxisBox.width - this.plotAreaWidth) / 2);
-
-    //     // Move the y-axis now that the height of the x-axis is known.
-    //     this.scales.y.range([this.plotAreaHeight, 0]);
-    //     this.yAxis.scale(this.scales.y);
-    //     this.plotLeftOffset += getBox(yAxisElement).width;
-
-    //     // Move x-axis after figuring out how much its labels overflow the canvas.
-    //     this.scales.x.range([0, this.plotAreaWidth], 0.1);
-    //     this.xAxis.scale(this.scales.x);
-
-    //     this.drawGridLines();
-
-    //     yAxisElement.call(this.yAxis);
-    //     yAxisElement.attr('transform', translate(this.plotLeftOffset, this.plotUpperOffset));
-
-    //     xAxisElement.call(this.xAxis);
-    //     xAxisElement.attr('transform', translate(this.plotLeftOffset, this.plotAreaHeight + this.plotUpperOffset));
-
-    //   }
-
 
     //   private drawGridLines(): void {
 
@@ -824,6 +730,19 @@ export class Chart {
         this.plotAreaWidth = innerWidth;
         this.plotAreaHeight = innerHeight;
 
+    }
+    
+    
+    /**
+     * Try to make a sensible title string from a variable name. For example, 'someField' will be 
+     * converted to 'Some Field'. This is just a default for when the user doesn't override it.
+     * 
+     * @param name  The variable name to convert.
+     * @returns     Converted title string.
+     */
+    private formatTitle(name: string) {
+        const words = _.words(name);
+        return _.map(words, _.capitalize).join(' ');
     }
 
 }
