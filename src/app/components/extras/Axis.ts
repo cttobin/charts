@@ -108,78 +108,72 @@ export class Axis extends Extra {
 
     protected getSize(otherExtras: ExtraBooleans): ExtraSize {
 
-        if (_.isNull(this.selection) || _.isUndefined(this.selection)) {
+        const result: ExtraSize = {width: 0, height: 0, topOffset: 0, leftOffset: 0};
 
-            return { width: 0, height: 0, topOffset: 0, leftOffset: 0 };
+        if (!_.isNull(this.selection) && !_.isUndefined(this.selection)) {
 
-        } else {
+            const element = <SVGGElement>this.selection.node();
+            const rectangle = element.getBBox();
 
-            const element = <SVGElement>this.selection.node();
-
-            let innerSize;
-            if (this.isHorizontal() || this.rotated) {
-                innerSize = element.getBoundingClientRect().height;
-            } else {
-                innerSize = element.getBoundingClientRect().width;
-            }
-
-            let labelOverflow = 0;
             if (this.isHorizontal()) {
-                
-                let leftOffset = 0;
-                if (!otherExtras.right) {
-                    labelOverflow += this.calculateLabelOverflow(_.last, 'width');
-                }
 
                 if (!otherExtras.left) {
-                    labelOverflow += this.calculateLabelOverflow(_.first, 'width');
-                    leftOffset = labelOverflow;
+                    result.width = this.calculateLabelOverflow(rectangle, _.first, 'width');
+                    result.leftOffset = result.width;
                 }
-
-                return {
-                    width: labelOverflow,
-                    height: innerSize + this.padding.top + this.padding.bottom,
-                    topOffset: 0,
-                    leftOffset: leftOffset
-                };
+                
+                if (!otherExtras.right) {
+                    result.width += this.calculateLabelOverflow(rectangle, _.last, 'width');
+                }
+                
+                result.height = rectangle.height + this.padding.top + this.padding.bottom;  
 
             } else {
 
-                let topOffset = 0;
                 if (!otherExtras.top) {
-                    labelOverflow += this.calculateLabelOverflow(_.first, 'height');
-                    topOffset = labelOverflow;
+                    result.height = this.calculateLabelOverflow(rectangle, _.last, 'height');
+                    result.topOffset = result.height;
                 }
 
                 if (!otherExtras.bottom) {
-                    labelOverflow += this.calculateLabelOverflow(_.last, 'height');
+                    result.height += this.calculateLabelOverflow(rectangle, _.first, 'height');
                 }
-
-                return {
-                    width: innerSize + this.padding.left + this.padding.right,
-                    height: labelOverflow,
-                    topOffset: topOffset,
-                    leftOffset: 0
-                };
+                
+                result.width = rectangle.width + this.padding.left + this.padding.right; 
 
             }
 
         }
+        
+        return result;
 
     }
-    
+
 
     /**
      * Calculate how far past the chart extent an axis label goes. This might be needed to adjust 
      * the axis back a bit to stop overflowing.
-     * @param selector  A function to select an item from the array of labels that will be found.
-     * @param dimension The name of the dimension to measure ('height' or 'width').
-     * @returns         Half of the height or width of the selected label element. 
+     * 
+     * @param axisRectangle  The position of the axis element.
+     * @param selector       A function to select an item from the array of labels that will be 
+     *                       found.
+     * @param dimension      The name of the dimension to measure ('height' or 'width').
+     * @returns              How much the label overflows the axis' outer position. 
      */
-    private calculateLabelOverflow(selector: (x: any) => HTMLElement, dimension: string): number {
-        const labels = this.selection.selectAll('text')[0];
-        const lastLabel = selector(labels).getBoundingClientRect();
-        return lastLabel[dimension] / 2;
+    private calculateLabelOverflow(axisRectangle: SVGRect, selector: (x: any) => SVGTextElement, dimension: string) {
+        
+        if (isOrdinalScale(this.scale)) {
+            return 0;
+        }
+        
+        const coordinate = dimension === 'width' ? 'x': 'y';        
+        const label = selector(this.selection.selectAll('text')[0]).getBBox();
+        if (Math.abs(axisRectangle[coordinate] - label[coordinate]) < label[dimension]) {
+            return label[dimension] / 2;
+        } else {
+            return 0;
+        }
+        
     }
 
 }

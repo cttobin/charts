@@ -50,15 +50,16 @@ export class ColumnLayer extends Layer {
 
         const dummyGroupName = 'dummy';
 
-        // The inner group will be the variable that will be used to group the bars. If there is no such
-        // grouping required, the inner grouping variable will just be undefined.
+        // The inner group will be the variable that will be used to group the bars. If there is no 
+        // such grouping required, the inner grouping variable will just be undefined.
         let innerGroup;
         if (groupings.length === 1) {
             innerGroup = this.userParameters[groupings[0]].name;
         } else if (groupings.length >= 2) {
 
-            // The charts need to be grouped by multiple fields. This is unlikely to have much practical
-            // use but this is the best charting library every created so it's better to handle it.
+            // The charts need to be grouped by multiple fields. This is unlikely to have much 
+            // practical use but this is the best charting library every created so it's better to 
+            // handle it.
             _.forEach(rows, (row: any) => {
 
                 // Extract the values for each group.
@@ -78,20 +79,22 @@ export class ColumnLayer extends Layer {
 
         }
 
-        // The outer groups are the things that will contain each group. For example, if the chart is
-        // plotting X versus Y coloured by Z, where Z can one be one of two values "z1" or "z2", then
-        // the chart's x-axis will be arranged like [z1, z2], [z1, z2], [z1, z2]. To get the data in
-        // that format, it needs to be grouped by X (an outer group being one [z1, z2]).
+        // The outer groups are the things that will contain each group. For example, if the chart 
+        // is plotting X versus Y coloured by Z, where Z can one be one of two values "z1" or "z2", 
+        // then the chart's x-axis will be arranged like [z1, z2], [z1, z2], [z1, z2]. To get the 
+        // data in that format, it needs to be grouped by X (an outer group being one [z1, z2]).
         const outerGroups = _.toArray(_.groupBy(rows, x.mapping.name));
         const outer = container
             .selectAll('g')
             .data(outerGroups)
             .enter()
             .append('g')
-            .attr('transform', (datum: any) => translate(x.scale(datum[0][x.mapping.name]), 0));
+            .attr('transform', (datum: any) => {
+                return translate(x.scale(datum[0][x.mapping.name]), 0)
+            });
 
-        // Make another axis based on the groups. In the example above, this will be based on "Z", the
-        // colour of the bars. This is needed so that within each X group, the Z values can be 
+        // Make another axis based on the groups. In the example above, this will be based on "Z", 
+        // the colour of the bars. This is needed so that within each X group, the Z values can be 
         // positioned.
         const innerExtent = _.uniq(_.map(rows, (datum: any) => datum[innerGroup]));
         const innerScale = d3.scale.ordinal()
@@ -100,7 +103,7 @@ export class ColumnLayer extends Layer {
 
         // Within each outer container, render the groups. Before this, the X axis will be displayed
         // like [ ] [ ] [ ] and this bit will make it like [z1, z2], [z1, z2].
-        this.elements = <any> outer.selectAll('rect')
+        this.elements = <any>outer.selectAll('rect')
             .data(_.identity)
             .enter()
             .append('rect')
@@ -133,7 +136,7 @@ export class ColumnLayer extends Layer {
             'height': (datum: any) => this.chart.plotAreaHeight - y.scale(datum[y.mapping.name]),
             'y': (datum: any) => y.scale(datum[y.mapping.name])
         });
-        
+
         return this.elements;
 
     }
