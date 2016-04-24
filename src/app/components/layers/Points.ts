@@ -57,7 +57,7 @@ export class PointLayer extends Layer {
       xScale.rangeRoundBands([xScale.rangeBand() / 2, chart.plotAreaWidth + (xScale.rangeBand() / 2)], 0.1);
     }
 
-    this.elements = chart.plotArea
+    this.elements = <any> chart.plotArea
       .append('g')
       .attr('class', this.className)
       .selectAll(this.datumClassName)
@@ -87,9 +87,7 @@ export class PointLayer extends Layer {
       .attr({
         'r': parameterScales.size,
         'cx': (datum: any) => xScale(datum[x.mapping.name])
-      })
-      .transition()
-      .duration(0);
+      });
 
     if (chart.isAnimated()) {
       const animation = chart.animation;
@@ -100,8 +98,7 @@ export class PointLayer extends Layer {
         .delay(animation.delay);
     }
 
-    this.elements.attr('cy', (datum: any) => y.scale(datum[y.mapping.name]));
-    return this.elements;
+    return this.elements.attr('cy', (datum: any) => y.scale(datum[y.mapping.name]));
 
   }
 
