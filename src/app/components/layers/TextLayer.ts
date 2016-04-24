@@ -1,15 +1,26 @@
-import { Layer } from './Layer';
+import { Layer, LayerNumberParameter, LayerStringParameter } from './Layer';
 import { LayerParameters } from '../LayerParameters';
 import { Chart } from '../Chart';
 import { ContinuousRangeScale, OrdinalRangeScale } from '../Scale';
+import { Mapping } from './../Mapping'; 
 
 
-export interface TextLayerParameters extends LayerParameters {
+export interface TextParameters {
+  size?: LayerNumberParameter;
+  fill?: LayerStringParameter;
+  opacity?: LayerNumberParameter;
+  stroke?: LayerStringParameter;
+  weight?: LayerStringParameter;
+  label?: Mapping;
+}
+
+
+interface TextScales {
   size: () => number;
   fill: () => string;
   opacity: () => number;
   stroke: () => string;
-  weight: () => number;
+  weight: () => string;
   label: () => string;
 }
 
@@ -24,9 +35,10 @@ export class TextLayer extends Layer {
 
       'size': new ContinuousRangeScale(20, [2, 6]),
       'fill': new OrdinalRangeScale(theme.swatch[1], theme.swatch, theme.gradient),
-      'opacity': new ContinuousRangeScale(1, [0.1, 1]),
+      'opacity': new ContinuousRangeScale(1, [0.4, 1]),
       'stroke': new OrdinalRangeScale(null, theme.swatch, theme.gradient),
-      'label': new OrdinalRangeScale(null, null, null)
+      'label': new OrdinalRangeScale(null, null, null),
+      'weight': new ContinuousRangeScale(400, [100, 900]),
 
     });
 
@@ -34,33 +46,47 @@ export class TextLayer extends Layer {
 
   public remove(): void {}
 
-  public draw(): void {
+  public draw(container: d3.Selection<SVGElement>): d3.Transition<SVGElement> {
 
-    let parameterScales = this.parameterScales as TextLayerParameters;
-    let chart = this.chart;
-    const mappings = chart.mappings;
+    const parameterScales = <TextScales>this.parameterScales;
+    const x = this.chart.axes.x;
+    const y = this.chart.axes.y;
 
-    chart.plotArea
+    let elements = this.chart.plotArea
       .append('g')
       .attr('class', this.className)
       .selectAll('.datum-points')
-      .data(chart.data.rows)
+      .data(this.chart.data.rows)
       .enter()
       .append('text')
       .attr({
-        'x': (datum: any) => chart.scales.x(datum[mappings.x.name]),
-        'y': (datum: any) => chart.scales.y(datum[mappings.y.name])
+        'x': (datum: any) => x.scale(datum[x.mapping.name])
       })
       .style({
         'fill': parameterScales.fill,
         'stroke': parameterScales.stroke,
         'opacity': parameterScales.opacity,
-        'font-size': parameterScales.size
+        'font-size': parameterScales.size,
+        'font-weight': parameterScales.weight
       })
-      .text(function (datum) {
-        return datum[mappings.label.name];
-      });
-
+      .transition()
+      .text(parameterScales.label);
+      
+      
+      if (this.chart.isAnimated()) {
+        const animation = this.chart.animation;
+        elements = elements.attr('y', y.scale.range()[0])
+          .transition()
+          .duration(animation.duration)
+          .ease(animation.easing)
+          .delay(animation.delay);
+      }
+      
+      elements.attr({
+        'y': (datum: any) => y.scale(datum[y.mapping.name])
+      })
+      
+      return elements;
 
   }
 
