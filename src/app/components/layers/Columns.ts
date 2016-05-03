@@ -6,6 +6,7 @@ import { translate } from './../utilities/translate';
 import { isOrdinalScale } from './../utilities/isOrdinalScale';
 import { generateUniqueProperty } from './../utilities/generateUniqueProperty';
 import { Mapping } from './../Mapping';
+import { Dictionary } from '../definitions/Dictionary';
 
 
 export interface ColumnParameters {
@@ -65,7 +66,7 @@ export class ColumnLayer extends Layer {
             // The charts need to be grouped by multiple fields. This is unlikely to have much 
             // practical use but this is the best charting library every created so it's better to 
             // handle it.
-            _.forEach(rows, (row: any) => {
+            _.forEach(rows, (row: Dictionary<any>) => {
 
                 // Extract the values for each group.
                 const group = _.map(groupings, (grouping: string) => {
@@ -89,27 +90,33 @@ export class ColumnLayer extends Layer {
         // then the chart's x-axis will be arranged like [z1, z2], [z1, z2], [z1, z2]. To get the 
         // data in that format, it needs to be grouped by X (an outer group being one [z1, z2]).
         const outerGroups = _.toArray(_.groupBy(rows, x.mapping.name));
+
+        let xScale = x.scale;
+        let groupWidth;
+        if (isOrdinalScale(x.scale)) {
+            
+            groupWidth = x.scale.rangeBand();
+            
+        } else {
+
+            // This is a linear scale, so each group of bars can take up the width between each tick
+            // mark. The scale needs to be adjusted because the bars extend beyond the normal range
+            // of the scale.
+            const uniqueItems = _(rows).map(x.mapping.name).uniq().value();
+            groupWidth = chart.plotAreaWidth / uniqueItems.length;
+            xScale = x.scale.copy();
+            xScale.range([0, chart.plotAreaWidth - groupWidth]);
+
+        }
+
         const outer = container
             .selectAll('g')
             .data(outerGroups)
             .enter()
             .append('g')
-            .attr('transform', (datum: any) => {
-                return translate(x.scale(datum[0][x.mapping.name]), 0)
-            });
-
-        let groupWidth;
-        if (isOrdinalScale(x.scale)) {
-            groupWidth = x.scale.rangeBand();
-        } else {
-
-            // This is a linear scale, so each group of bars can take up the width between each 
-            // tick mark. 
-            const uniqueItems = _(rows).map(x.mapping.name).uniq().value();
-            groupWidth = this.chart.plotAreaWidth / uniqueItems.length;
-
-        }
-
+            .attr('transform', (datum: Dictionary<any>) => 
+                translate(xScale(datum[0][x.mapping.name]), 0)
+            );
 
         const innerField = this.chart.data.fields[innerGroup];
 
@@ -117,19 +124,19 @@ export class ColumnLayer extends Layer {
         // the colour of the bars. This is needed so that within each X group, the Z values can be 
         // positioned.
         let innerScale;
-        if (innerField.isOrdinal()) {
+        if (innerGroup === dummyGroupName || innerField.isOrdinal()) {
 
-            const innerExtent = _.uniq(_.map(rows, (datum: any) => datum[innerGroup]));
+            const innerExtent = _.uniq(_.map(rows, (datum: Dictionary<any>) => datum[innerGroup]));
             innerScale = d3.scale.ordinal()
                 .domain(innerExtent)
-                .rangeRoundBands([0, groupWidth], groupings.length ? 0.05 : 0);
+                .rangeBands([0, groupWidth], groupings.length ? 0.05 : 0);
 
         } else {
 
-            const innerExtent = d3.extent(rows, (datum: any) => datum[innerGroup]);
+            const innerExtent = d3.extent(rows, (datum: Dictionary<any>) => datum[innerGroup]);
             innerScale = d3.scale.linear()
                 .domain(innerExtent)
-                .range([0, x.scale.rangeBand()]);
+                .range([0, groupWidth]);
 
         }
 
@@ -166,8 +173,9 @@ export class ColumnLayer extends Layer {
 
         // Post-animation positions.
         this.elements.attr({
-            'height': (datum: any) => this.chart.plotAreaHeight - y.scale(datum[y.mapping.name]),
-            'y': (datum: any) => y.scale(datum[y.mapping.name])
+            'height': (datum: Dictionary<any>) => 
+                this.chart.plotAreaHeight - y.scale(datum[y.mapping.name]),
+            'y': (datum: Dictionary<any>) => y.scale(datum[y.mapping.name])
         });
 
         return this.elements;

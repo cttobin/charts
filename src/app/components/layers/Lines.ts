@@ -1,11 +1,22 @@
 import { Chart } from './../Chart';
-import { Layer } from './Layer';
+import { Layer, LayerNumberParameter, LayerStringParameter } from './Layer';
 import { LayerParameters } from './../LayerParameters';
 import { StaticRangeScale, ContinuousRangeScale, OrdinalRangeScale } from './../Scale';
 import { isOrdinalScale } from './../utilities/isOrdinalScale';
+import { Dictionary } from './../definitions/Dictionary';
 
 
-interface LineParameters extends LayerParameters {
+// TODO: Interpolate is a fixed parameter.
+export interface LineParameters {
+    thickness: () => LayerNumberParameter;
+    interpolate: () => LayerStringParameter;
+    dash: () => LayerStringParameter;
+    opacity: () => LayerNumberParameter;
+    stroke: () => LayerStringParameter;
+}
+
+
+interface LineScales {
     thickness: () => number;
     interpolate: () => string;
     dash: () => string;
@@ -40,7 +51,7 @@ export class LineLayer extends Layer {
     }
 
     _onFirstDatum(method: (datum: any) => any): (datum: any) => any {
-        return function(data: any[]): any {
+        return function (data: any[]): any {
             return method(data[0]);
         };
     }
@@ -52,22 +63,17 @@ export class LineLayer extends Layer {
     public draw(container: d3.Selection<SVGElement>, index: number): d3.Transition<SVGElement> {
 
         let chart = this.chart;
-        const parameterScales = super._generateScales(chart.data) as LineParameters;
-        const interpolation = parameterScales.interpolate();
+        const parameterScales = <LineScales> this.parameterScales;
+        const interpolation = parameterScales.interpolate;
 
         const x = chart.axes.x;
         const y = chart.axes.y;
         let xScale = x.scale;
-        
-        if (isOrdinalScale(xScale)) {
-            xScale = xScale.copy();
-            xScale.rangeRoundBands([xScale.rangeBand() / 2, chart.plotAreaWidth + (xScale.rangeBand() / 2)], 0.1);
-        }
 
         const lineFunction = d3.svg.line()
             .x((datum: any) => xScale(datum[x.mapping.name]))
             .y((datum: any) => y.scale(datum[y.mapping.name]))
-            .interpolate(interpolation);
+            .interpolate('linear');
 
         // Assume the data has not been grouped and it should just
         // be plotted as it was given originally.

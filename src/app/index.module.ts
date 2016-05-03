@@ -47,15 +47,13 @@ import { Data } from './components/Data';
             format: PlotJS.labels.currency(),
             otherSide: false
         })
-        .columns({fill: department, opacity: 0.25})
+        // .columns({fill: department})
         .points({
-            fill: PlotJS.mapping('department'),
-            size: PlotJS.mapping('sales')
+            fill: department
         })
         .lines({
-            stroke: PlotJS.mapping('department')
+            stroke: department, dash: department
         })
-        
         // .text({
         //     // stroke: department,
         //     // fill: 'white',

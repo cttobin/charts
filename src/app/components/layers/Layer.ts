@@ -4,6 +4,7 @@ import { Data } from './../Data';
 import { StaticRangeScale } from './../Scale';
 import { Mapping } from './../Mapping';
 import { andList, orList } from './../quotedList';
+import { Dictionary } from '../definitions/Dictionary';
 
 
 export type LayerStringParameter = string | Mapping | ((datum: { [index: string]: any }) => string);
@@ -36,7 +37,7 @@ export abstract class Layer {
         this.datumClassName = this.className + '-datum';
         this.tooltipClassName = this.className + '-tooltip';
 
-        this.parameterScales = this._generateScales(chart.data);
+        this.parameterScales = this.generateScales(chart.data);
 
     }
 
@@ -45,17 +46,17 @@ export abstract class Layer {
         // Append a container for the layer elements.
         const container = this.chart.plotArea.append('g').classed(this.className, true);
         const elements = this.draw(container, index);
-        
+
         // The user may have asked to be notified when the chart stops transitioning.
         if (_.isFunction(transitionCallback)) {
-            
+
             // The transitions completions are triggered when each individual element in the layer 
             // finishes. Thus the number of total elements needs to be known.
             const totalElements = _(elements).flatten().size();
-            
+
             // If the chart ain't animated there will be no transitions to watch.
             if (this.chart.isAnimated()) {
-                
+
                 elements.each('end', () => {
 
                     // Wait for all elements to transition before calling the callback.
@@ -64,7 +65,7 @@ export abstract class Layer {
                         transitionCallback();
                     }
                 });
-                
+
             } else {
                 transitionCallback();
             }
@@ -72,7 +73,7 @@ export abstract class Layer {
 
     }
 
-    protected _generateScales(data: Data): { [index: string]: () => string | number } {
+    protected generateScales(data: Data): Dictionary<() => string|number> {
 
         const userParameterNames = _.keys(this.userParameters);
         const clash = _.intersection(userParameterNames, ['fill', 'stroke']);
@@ -89,7 +90,7 @@ export abstract class Layer {
                 `Valid parameters are ${validList}.`);
         }
 
-        let scales: { [index: string]: () => string | number } = {};
+        let scales: Dictionary<() => string|number> = {};
 
         _.forOwn(this.userParameters, (parameter: any, parameterName: string) => {
 
@@ -184,7 +185,7 @@ export abstract class Layer {
 
         _(this.defaultParameters)
             .keys()
-            .reject(function(name: string) {
+            .reject(function (name: string) {
 
                 // Do not apply default parameters if the user has overridden them.
                 return _.includes(userParameterNames, name);

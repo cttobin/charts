@@ -52,11 +52,6 @@ export class PointLayer extends Layer {
     const x = chart.axes.x;
     const y = chart.axes.y;
     let xScale = x.scale;
-    
-    if (isOrdinalScale(xScale)) {
-        xScale = xScale.copy();
-        xScale.rangeRoundBands([xScale.rangeBand() / 2, chart.plotAreaWidth + (xScale.rangeBand() / 2)], 0.1);
-    }
 
     this.elements = <any> chart.plotArea
       .append('g')

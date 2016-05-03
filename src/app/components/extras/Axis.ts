@@ -15,7 +15,7 @@ export class Axis extends Extra {
         private ticks: number,
         private ticksFormat: (x: number) => string,
         psuedoOrdinal: boolean) {
-        
+
         super(position, false, className);
         this.centreTicks = psuedoOrdinal && !isOrdinalScale(scale);
 
@@ -41,13 +41,13 @@ export class Axis extends Extra {
     }
 
     public move(offset: ExtraOffset, plotAreaWidth: number, plotAreaHeight: number): void {
-        
+
         // Getting the tick width to make adjustments for layers that need an ordinal-like scale.
         const ticks = this.selection.selectAll('.tick');
         const tickCount = ticks[0].length;
         const tickSize = this.isHorizontal() ? (plotAreaWidth / tickCount) : (plotAreaHeight / tickCount);
-        const rangeReduction = this.centreTicks ? tickSize : 0;
-        
+        const rangeReduction = (this.centreTicks ? tickSize : 0) / 2;
+
         // TODO: Adjust vertical axis for psuedo ordinal scales.
 
         if (this.atLeft()) {
@@ -63,7 +63,7 @@ export class Axis extends Extra {
             if (isOrdinalScale(this.scale)) {
                 (<d3.scale.Ordinal<string, number>>this.scale).rangeRoundBands([0, plotAreaWidth], 0.1);
             } else {
-                this.scale.range([0, plotAreaWidth - rangeReduction]);
+                this.scale.range([rangeReduction, plotAreaWidth - rangeReduction]);
             }
 
             this.axis.scale(this.scale);
@@ -95,42 +95,7 @@ export class Axis extends Extra {
 
         }
 
-        if (this.centreTicks) {
-            
-            // Some layers behave in a silly way without ordinal scales. For example, bar charts 
-            // must be centred over the tick mark on the axis. But without any adjustment on a 
-            // linear scale, this won't happen. Each bar will extend from the tick mark outwards.
-            // Therefore this step here centres each tick in the gap between itself and the next.
-            const adjustTicks = this.isHorizontal() ? this.adjustTicksRight : this.adjustTicksUp;
-            ticks.attr('transform', function () {
-                const transform = d3.transform(d3.select(this).attr('transform'));
-                return adjustTicks(transform, tickSize);
-            });
 
-        }
-
-
-    }
-    
-    
-    /**
-     * For psuedo ordinal horizontal scales, the ticks must be centred horizontally. 
-     * @param transform  The tick's current translation.
-     * @param tickSize   The width of each tick.
-     */
-    private adjustTicksRight(transform: d3.Transform, tickSize: number): string {
-        return translate(transform.translate[0] + (tickSize /  2), 0);
-    }
-    
-    
-    /**
-     * As with horizontal ticks, ticks on a vertical psuedo ordinal scale must be centred 
-     * vertically.
-     * @param transform  The tick's current translation.
-     * @param tickSize   The height of each tick.
-     */
-    private adjustTicksUp(transform: d3.Transform, tickSize: number): string {
-        return translate(0, transform.translate[1] + (tickSize /  2));
     }
 
 
