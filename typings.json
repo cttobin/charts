@@ -5,6 +5,6 @@
   "ambientDependencies": {
     "bluebird": "registry:dt/bluebird#2.0.0+20160319051630",
     "d3": "registry:dt/d3#0.0.0+20160317120654",
-    "lodash": "registry:dt/lodash#3.10.0+20160319050323"
+    "lodash": "registry:dt/lodash#3.10.0+20160330154726"
   }
 }

@@ -68,6 +68,7 @@ interface AxisDefinition extends AxisOptions {
     mapping?: Mapping;
     // scale?: d3.scale.Linear<any, any>|d3.scale.Ordinal<any, any>;
     scale?: any;
+    axis?: Axis;
 }
 
 
@@ -119,7 +120,7 @@ export class Chart {
         this.animation = {
             duration: 1500,
             easing: 'elastic',
-            delay: 0
+            delay: 125
         };
 
         this.theme = new Theme(['#2980b9', '#27ae60', '#e74c3c', '#9b59b6', '#1cccaa', '#f39c12'], ['#f1c40f', '#f39c12']);
@@ -232,6 +233,8 @@ export class Chart {
             } else {
                 extras.unshift(xAxis);
             }
+            
+            axis.axis = xAxis;
 
         } else {
             
@@ -244,6 +247,8 @@ export class Chart {
             } else {
                 extras.unshift(yAxis);
             }
+            
+            axis.axis = yAxis;
 
         }
 
@@ -258,6 +263,11 @@ export class Chart {
         const dataField = this.data.fields[mapping.name];
         const zero = _(this.layers).filter((layer: Layer) => layer.zeroY).some();
         const extent = d3.extent(this.data.rows, (datum: { [index: string]: any }) => datum[mapping.name]);
+        
+        let psuedoOrdinal = false;
+        if (name === 'x') {
+            psuedoOrdinal = _(this.layers).filter((layer: Layer) => layer.ordinalXScale).some();    
+        }
         
         // Force the axis to start at zero if any layer requires that.
         if (extent[0] > 0 && zero) {
@@ -316,7 +326,7 @@ export class Chart {
             
         }
         
-        return new Axis(position, ['axis', name], axis.scale, axis.ticks, axis.format);
+        return new Axis(position, ['axis', name], axis.scale, axis.ticks, axis.format, psuedoOrdinal);
         
     }
 
@@ -527,13 +537,13 @@ export class Chart {
 
         let transitionsCompleted = 0;
         return new Promise((resolve: () => any, reject: () => any) => {
-            _.forEach(this.layers, (layer: Layer) => {
+            _.forEach(this.layers, (layer: Layer, index: number) => {
                 layer.drawLayer(() => {
                     transitionsCompleted++;
                     if (transitionsCompleted === this.layers.length) {
                         resolve();
                     }
-                });
+                }, index);
             });
         });
 

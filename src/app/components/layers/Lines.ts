@@ -49,7 +49,7 @@ export class LineLayer extends Layer {
         this.elements.remove();
     }
 
-    public draw(container: d3.Selection<SVGElement>): d3.Transition<SVGElement> {
+    public draw(container: d3.Selection<SVGElement>, index: number): d3.Transition<SVGElement> {
 
         let chart = this.chart;
         const parameterScales = super._generateScales(chart.data) as LineParameters;
@@ -57,14 +57,15 @@ export class LineLayer extends Layer {
 
         const x = chart.axes.x;
         const y = chart.axes.y;
-        const xScale = x.scale;
-
+        let xScale = x.scale;
+        
         if (isOrdinalScale(xScale)) {
+            xScale = xScale.copy();
             xScale.rangeRoundBands([xScale.rangeBand() / 2, chart.plotAreaWidth + (xScale.rangeBand() / 2)], 0.1);
         }
 
         const lineFunction = d3.svg.line()
-            .x((datum: any) => x.scale(datum[x.mapping.name]))
+            .x((datum: any) => xScale(datum[x.mapping.name]))
             .y((datum: any) => y.scale(datum[y.mapping.name]))
             .interpolate(interpolation);
 
@@ -136,7 +137,7 @@ export class LineLayer extends Layer {
                 .transition()
                 .duration(animation.duration)
                 .ease(animation.easing)
-                .delay(animation.delay);
+                .delay(animation.delay * index);
         }
 
         this.elements.attr('d', lineFunction);

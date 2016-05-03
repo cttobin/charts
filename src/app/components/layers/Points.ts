@@ -44,17 +44,18 @@ export class PointLayer extends Layer {
     this.elements.remove();
   }
 
-  public draw(container: d3.Selection<SVGElement>): d3.Transition<SVGElement> {
+  public draw(container: d3.Selection<SVGElement>, index: number): d3.Transition<SVGElement> {
 
     const parameterScales = <PointScales> this.parameterScales;
     const chart = this.chart;
     
     const x = chart.axes.x;
     const y = chart.axes.y;
-    const xScale = chart.axes.x.scale;
-
+    let xScale = x.scale;
+    
     if (isOrdinalScale(xScale)) {
-      xScale.rangeRoundBands([xScale.rangeBand() / 2, chart.plotAreaWidth + (xScale.rangeBand() / 2)], 0.1);
+        xScale = xScale.copy();
+        xScale.rangeRoundBands([xScale.rangeBand() / 2, chart.plotAreaWidth + (xScale.rangeBand() / 2)], 0.1);
     }
 
     this.elements = <any> chart.plotArea
@@ -95,7 +96,7 @@ export class PointLayer extends Layer {
         .transition()
         .duration(animation.duration)
         .ease(animation.easing)
-        .delay(animation.delay);
+        .delay(animation.delay * index);
     }
 
     return this.elements.attr('cy', (datum: any) => y.scale(datum[y.mapping.name]));

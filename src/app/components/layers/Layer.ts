@@ -19,7 +19,7 @@ export abstract class Layer {
     protected datumClassName: string;
     private transitionsCompleted: number = 0;
 
-    abstract draw(container: d3.Selection<SVGElement>): d3.Transition<SVGElement>;
+    abstract draw(container: d3.Selection<SVGElement>, index: number): d3.Transition<SVGElement>;
     abstract remove(): void;
 
     constructor(protected name: string,
@@ -40,11 +40,11 @@ export abstract class Layer {
 
     }
 
-    public drawLayer(transitionCallback: () => void): void {
+    public drawLayer(transitionCallback: () => void, index: number): void {
 
         // Append a container for the layer elements.
         const container = this.chart.plotArea.append('g').classed(this.className, true);
-        const elements = this.draw(container);
+        const elements = this.draw(container, index);
         
         // The user may have asked to be notified when the chart stops transitioning.
         if (_.isFunction(transitionCallback)) {

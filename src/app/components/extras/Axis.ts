@@ -2,21 +2,22 @@ import { isOrdinalScale } from './../utilities/isOrdinalScale';
 import { Extra, ExtraOffset, ExtraPosition, ExtraSize, ExtraBooleans } from './Extra';
 import { translate } from './../utilities/translate';
 
-// TODO: Make sure the axis text isn't getting cut off/overflowing.
-
 export type AxisOrientation = 'top' | 'right' | 'bottom' | 'left';
 
 export class Axis extends Extra {
 
     private axis: d3.svg.Axis;
+    private centreTicks: boolean;
 
     constructor(position: number,
         className: string | string[],
         private scale: d3.scale.Linear<any, any> | d3.scale.Ordinal<any, any>,
         private ticks: number,
-        private ticksFormat: (x: number) => string) {
-
+        private ticksFormat: (x: number) => string,
+        psuedoOrdinal: boolean) {
+        
         super(position, false, className);
+        this.centreTicks = psuedoOrdinal && !isOrdinalScale(scale);
 
     }
 
@@ -40,6 +41,14 @@ export class Axis extends Extra {
     }
 
     public move(offset: ExtraOffset, plotAreaWidth: number, plotAreaHeight: number): void {
+        
+        // Getting the tick width to make adjustments for layers that need an ordinal-like scale.
+        const ticks = this.selection.selectAll('.tick');
+        const tickCount = ticks[0].length;
+        const tickSize = this.isHorizontal() ? (plotAreaWidth / tickCount) : (plotAreaHeight / tickCount);
+        const rangeReduction = this.centreTicks ? tickSize : 0;
+        
+        // TODO: Adjust vertical axis for psuedo ordinal scales.
 
         if (this.atLeft()) {
 
@@ -54,7 +63,7 @@ export class Axis extends Extra {
             if (isOrdinalScale(this.scale)) {
                 (<d3.scale.Ordinal<string, number>>this.scale).rangeRoundBands([0, plotAreaWidth], 0.1);
             } else {
-                this.scale.range([0, plotAreaWidth]);
+                this.scale.range([0, plotAreaWidth - rangeReduction]);
             }
 
             this.axis.scale(this.scale);
@@ -76,7 +85,7 @@ export class Axis extends Extra {
             if (isOrdinalScale(this.scale)) {
                 (<d3.scale.Ordinal<string, number>>this.scale).rangeRoundBands([0, plotAreaWidth], 0.1);
             } else {
-                this.scale.range([0, plotAreaWidth]);
+                this.scale.range([0, plotAreaWidth - rangeReduction]);
             }
 
             this.axis.scale(this.scale);
@@ -86,6 +95,42 @@ export class Axis extends Extra {
 
         }
 
+        if (this.centreTicks) {
+            
+            // Some layers behave in a silly way without ordinal scales. For example, bar charts 
+            // must be centred over the tick mark on the axis. But without any adjustment on a 
+            // linear scale, this won't happen. Each bar will extend from the tick mark outwards.
+            // Therefore this step here centres each tick in the gap between itself and the next.
+            const adjustTicks = this.isHorizontal() ? this.adjustTicksRight : this.adjustTicksUp;
+            ticks.attr('transform', function () {
+                const transform = d3.transform(d3.select(this).attr('transform'));
+                return adjustTicks(transform, tickSize);
+            });
+
+        }
+
+
+    }
+    
+    
+    /**
+     * For psuedo ordinal horizontal scales, the ticks must be centred horizontally. 
+     * @param transform  The tick's current translation.
+     * @param tickSize   The width of each tick.
+     */
+    private adjustTicksRight(transform: d3.Transform, tickSize: number): string {
+        return translate(transform.translate[0] + (tickSize /  2), 0);
+    }
+    
+    
+    /**
+     * As with horizontal ticks, ticks on a vertical psuedo ordinal scale must be centred 
+     * vertically.
+     * @param transform  The tick's current translation.
+     * @param tickSize   The height of each tick.
+     */
+    private adjustTicksUp(transform: d3.Transform, tickSize: number): string {
+        return translate(0, transform.translate[1] + (tickSize /  2));
     }
 
 
@@ -108,7 +153,7 @@ export class Axis extends Extra {
 
     protected getSize(otherExtras: ExtraBooleans): ExtraSize {
 
-        const result: ExtraSize = {width: 0, height: 0, topOffset: 0, leftOffset: 0};
+        const result: ExtraSize = { width: 0, height: 0, topOffset: 0, leftOffset: 0 };
 
         if (!_.isNull(this.selection) && !_.isUndefined(this.selection)) {
 
@@ -121,12 +166,12 @@ export class Axis extends Extra {
                     result.width = this.calculateLabelOverflow(rectangle, _.first, 'width');
                     result.leftOffset = result.width;
                 }
-                
+
                 if (!otherExtras.right) {
                     result.width += this.calculateLabelOverflow(rectangle, _.last, 'width');
                 }
-                
-                result.height = rectangle.height + this.padding.top + this.padding.bottom;  
+
+                result.height = rectangle.height + this.padding.top + this.padding.bottom;
 
             } else {
 
@@ -138,13 +183,13 @@ export class Axis extends Extra {
                 if (!otherExtras.bottom) {
                     result.height += this.calculateLabelOverflow(rectangle, _.first, 'height');
                 }
-                
-                result.width = rectangle.width + this.padding.left + this.padding.right; 
+
+                result.width = rectangle.width + this.padding.left + this.padding.right;
 
             }
 
         }
-        
+
         return result;
 
     }
@@ -161,19 +206,19 @@ export class Axis extends Extra {
      * @returns              How much the label overflows the axis' outer position. 
      */
     private calculateLabelOverflow(axisRectangle: SVGRect, selector: (x: any) => SVGTextElement, dimension: string) {
-        
+
         if (isOrdinalScale(this.scale)) {
             return 0;
         }
-        
-        const coordinate = dimension === 'width' ? 'x': 'y';        
+
+        const coordinate = dimension === 'width' ? 'x' : 'y';
         const label = selector(this.selection.selectAll('text')[0]).getBBox();
         if (Math.abs(axisRectangle[coordinate] - label[coordinate]) < label[dimension]) {
             return label[dimension] / 2;
         } else {
             return 0;
         }
-        
+
     }
 
 }
