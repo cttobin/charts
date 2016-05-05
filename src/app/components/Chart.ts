@@ -527,7 +527,7 @@ export class Chart {
 
             // There are other extras, see if one if a main title.
             const titleIndex = _.findIndex(this.extras.top, (extra: Extra) => {
-                return extra instanceof Extra && _.includes(extra.className, 'main-title');
+                return extra instanceof Extra && _.includes(extra.classList, 'main-title');
             });
 
             if (titleIndex !== -1) {

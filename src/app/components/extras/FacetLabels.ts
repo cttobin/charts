@@ -2,15 +2,18 @@ import { Extra, ExtraBooleans, ExtraOffset, ExtraSize } from './Extra';
 
 export class FacetLabels extends Extra {
 
-    constructor(position: number, className: string | string[], private labels: string[]) {
+    private labels: string[];
+
+    constructor(position: number, className: string|string[], labels: string[]) {
         super(position, false, className);
+        this.labels = labels;
     }
 
     protected drawElement(svg: d3.Selection<SVGElement>): d3.Selection<SVGElement> {
 
         return <any>svg
             .append('g')
-            .selectAll('.what')
+            .selectAll(`${this.className} g`)
             .data(this.labels)
             .enter()
             .append('text')
@@ -65,32 +68,6 @@ export class FacetLabels extends Extra {
 
         }
 
-    }
-
-    protected getSize(otherExtras: ExtraBooleans): ExtraSize {
-
-        if (_.isNull(this.selection) || _.isUndefined(this.selection)) {
-
-            return { width: 0, height: 0, topOffset: 0, leftOffset: 0 };
-
-        } else {
-
-            const element = <SVGElement>this.selection.node();
-
-            let innerSize;
-            if (this.isHorizontal() || this.rotated) {
-                innerSize = element.getBoundingClientRect().height;
-            } else {
-                innerSize = element.getBoundingClientRect().width;
-            }
-
-            if (this.isHorizontal()) {
-                return { height: innerSize + this.padding.top + this.padding.bottom, width: 0, topOffset: 0, leftOffset: 0 };
-            } else {
-                return { width: innerSize + this.padding.left + this.padding.right, height: 0, topOffset: 0, leftOffset: 0 };
-            }
-
-        }
     }
 
 } 

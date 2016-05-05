@@ -51,18 +51,25 @@ export interface ExtraOffset {
 const DEFAULT_PADDING: ExtraOffset = { top: 0, right: 0, bottom: 0, left: 0 };
 
 export abstract class Extra {
-
+    
+    public position: ExtraPosition;
+    public classList: string|string[];
+    
+    protected rotated: boolean;
+    protected className: string;
     protected selection: d3.Selection<SVGElement>;
     protected padding: ExtraOffset;
     protected size: { width: number, height: number, topOffset: number, leftOffset: number };
 
-    constructor(public position: ExtraPosition, protected rotated: boolean, public className: string | string[]) {
+    constructor(position: ExtraPosition, rotated: boolean, classList: string|string[]) {
         this.padding = DEFAULT_PADDING;
+        this.position = position;
+        this.rotated = rotated;
+        this.classList = classList
     }
 
     protected abstract drawElement(svg: d3.Selection<SVGElement>): d3.Selection<SVGElement>;
     public abstract move(offset: ExtraOffset, plotAreaWidth: number, plotAreaHeight: number): void;
-    protected abstract getSize(otherExtras: { top: boolean, right: boolean, bottom: boolean, left: boolean }): ExtraSize;
 
 
     /**
@@ -71,15 +78,15 @@ export abstract class Extra {
     public draw(svg: d3.Selection<SVGElement>, otherExtras: ExtraBooleans): ExtraSize {
 
         this.selection = this.drawElement(svg);
-        if (!_.isNull(this.className)) {
+        if (!_.isNull(this.classList)) {
             
             // Create a single string of classes to apply to the element.
-            let classes = <string>this.className;
-            if (_.isArray(this.className)) {
-                classes = (<string[]>this.className).join(' ');
+            this.className = <string>this.classList;
+            if (_.isArray(this.classList)) {
+                this.className = (<string[]>this.classList).join(' ');
             }
 
-            this.selection.classed(classes, true);
+            this.selection.classed(this.className, true);
 
         }
 
@@ -133,6 +140,32 @@ export abstract class Extra {
      */
     public atRight(): boolean {
         return this.position === ExtraPosition.Right;
+    }
+    
+    protected getSize(otherExtras: ExtraBooleans): ExtraSize {
+
+        if (_.isNull(this.selection) || _.isUndefined(this.selection)) {
+
+            return { width: 0, height: 0, topOffset: 0, leftOffset: 0 };
+
+        } else {
+
+            const element = <SVGElement>this.selection.node();
+
+            let innerSize;
+            if (this.isHorizontal() || this.rotated) {
+                innerSize = element.getBoundingClientRect().height;
+            } else {
+                innerSize = element.getBoundingClientRect().width;
+            }
+
+            if (this.isHorizontal()) {
+                return { height: innerSize + this.padding.top + this.padding.bottom, width: 0, topOffset: 0, leftOffset: 0 };
+            } else {
+                return { width: innerSize + this.padding.left + this.padding.right, height: 0, topOffset: 0, leftOffset: 0 };
+            }
+
+        }
     }
 
 }
