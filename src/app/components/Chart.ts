@@ -1,6 +1,7 @@
 import { LayerParameters } from './LayerParameters';
 import { ChartOptions, ChartCentre } from './ChartOptions';
 import { Mapping, Mappings } from './Mapping';
+import { Dictionary } from './definitions/Dictionary';
 
 import { Layer } from './layers/Layer';
 import { ColumnLayer } from './layers/Columns';
@@ -20,6 +21,7 @@ import { translate } from './utilities/translate';
 import { Extra, ExtraOffset, ExtraPosition, getExtraPositionName, ExtraArrays, ExtraBooleans } from './extras/Extra';
 import { TextExtra } from './extras/TextExtra';
 import { Axis } from './extras/Axis';
+import { FacetLabels } from './extras/FacetLabels';
 
 function setTransform(element: d3.Selection<SVGElement>, x: number, y: number): void {
     element.attr('transform', translate(x, y));
@@ -78,7 +80,7 @@ export class Chart {
     private static DEFAULT_TICK_FORMAT: ((x: number) => string) = (x: number) => x.toString();
 
     public data: Data;
-    public mappings: Mappings;
+    public mappings: {x?: Mapping|Mapping[], y?: Mapping|Mapping[]};
 
     public axes: { x: AxisDefinition, y: AxisDefinition };
     public userAxes: { x: AxisDefinition, y: AxisDefinition };
@@ -174,7 +176,7 @@ export class Chart {
      * @param x        The mapping for the axis i.e. what variable it relates to.
      * @param options  Axis settings like the side it's on.
      */
-    public x(x: Mapping, options?: AxisOptions): Chart {
+    public x(x: Mapping|Mapping[], options?: AxisOptions): Chart {
         this.userAxes.x = options;
         this.mappings.x = x;
         return this;
@@ -186,17 +188,35 @@ export class Chart {
      * @param y        The mapping for the axis i.e. what variable it relates to.
      * @param options  Axis settings like the side it's on.
      */
-    public y(y: Mapping, options?: AxisOptions): Chart {
+    public y(y: Mapping|Mapping[], options?: AxisOptions): Chart {
         this.userAxes.y = options;
         this.mappings.y = y;
         return this;
+    }
+    
+    private createFacets() {
+        
+        const facetTop = new FacetLabels(ExtraPosition.Top, 'facet-labels', ['One', 'Two']);
+        const facetRight = new FacetLabels(ExtraPosition.Right, 'facet-labels', ['One', 'Two']);
+        this.extras.top.push(facetTop);
+        this.extras.right.push(facetRight);
+        
     }
 
 
     /**
      * Overwrite axis defaults.
      */
-    private updateAxis(name: string, mapping: Mapping, options?: AxisOptions): void {
+    private updateAxis(name: string, mapping: Mapping|Mapping[], options?: AxisOptions): void {
+
+        if (_.isArray(mapping) && mapping.length > 1) {
+            this.createFacets();
+            mapping = mapping[0];
+        }
+        
+        if (_.isUndefined(options)) {
+            options = {};
+        }
 
         const axis: AxisDefinition = this.axes[name];
         Chart.replaceDefaults(axis, options);
@@ -262,7 +282,7 @@ export class Chart {
         
         const dataField = this.data.fields[mapping.name];
         const zero = _(this.layers).filter((layer: Layer) => layer.zeroY).some();
-        const extent = d3.extent(this.data.rows, (datum: { [index: string]: any }) => datum[mapping.name]);
+        const extent = d3.extent(this.data.rows, (datum: Dictionary<any>) => datum[mapping.name]);
         
         let psuedoOrdinal = false;
         if (name === 'x') {

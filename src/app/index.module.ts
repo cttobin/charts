@@ -40,9 +40,7 @@ import { Data } from './components/Data';
 
     // const subset = _.filter(dateData, { department: 'A' });
     const chart = PlotJS.chart(rawData, { centreHorizontal: 'partial' })
-        .x(PlotJS.mapping('year'), {
-            otherSide: false
-        })
+        .x([PlotJS.mapping('year'), PlotJS.mapping('department')])
         .y(PlotJS.mapping('sales'), {
             format: PlotJS.labels.currency(),
             otherSide: false
@@ -62,7 +60,7 @@ import { Data } from './components/Data';
         // })
         // .animate(null)
         .title('Chart Title')
-        // .subtitle('Subtitle')
+        .subtitle('Subtitle')
         .draw('.chart-1')
         .then(function () {
             console.log('Done!');

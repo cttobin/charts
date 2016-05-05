@@ -3,25 +3,16 @@ import { Extra, ExtraOffset, ExtraPosition, ExtraBooleans, ExtraSize } from './E
 
 export class TextExtra extends Extra {
 
-    constructor(position: number, className: string|string[], private text: string) {
+    constructor(position: number, className: string | string[], private text: string) {
         super(position, position === ExtraPosition.Left || position === ExtraPosition.Right, className);
     }
 
     protected drawElement(svg: d3.Selection<SVGElement>): d3.Selection<SVGElement> {
 
-        const container = <SVGElement> svg.node();
-        let selection: d3.Selection<SVGElement>;
-
-        if (container instanceof SVGElement) {
-
-            // Append text element and vertical centre it.
-            selection = svg.append('text')
-                .attr('text-anchor', 'middle')
-                .text(this.text);
-
-        }
-
-        return selection;
+        // Append text element and vertical centre it.
+        return svg.append('text')
+            .attr('text-anchor', 'middle')
+            .text(this.text);
 
     }
 
@@ -60,32 +51,32 @@ export class TextExtra extends Extra {
         }
 
     }
-    
-    
+
+
     protected getSize(otherExtras: ExtraBooleans): ExtraSize {
 
-      if (_.isNull(this.selection) || _.isUndefined(this.selection)) {
-          
-          return {width: 0, height: 0, topOffset: 0, leftOffset: 0};
-          
-      } else {
+        if (_.isNull(this.selection) || _.isUndefined(this.selection)) {
 
-        const element = <SVGElement> this.selection.node();
+            return { width: 0, height: 0, topOffset: 0, leftOffset: 0 };
 
-        let innerSize;
-        if (this.isHorizontal() || this.rotated) {
-            innerSize = element.getBoundingClientRect().height;
         } else {
-            innerSize = element.getBoundingClientRect().width;
-        }
 
-        if (this.isHorizontal()) {
-            return {height: innerSize + this.padding.top + this.padding.bottom, width: 0, topOffset: 0, leftOffset: 0};
-        } else {
-            return {width: innerSize + this.padding.left + this.padding.right, height: 0, topOffset: 0, leftOffset: 0};
-        }
+            const element = <SVGElement>this.selection.node();
 
-      }
-  }
+            let innerSize;
+            if (this.isHorizontal() || this.rotated) {
+                innerSize = element.getBoundingClientRect().height;
+            } else {
+                innerSize = element.getBoundingClientRect().width;
+            }
+
+            if (this.isHorizontal()) {
+                return { height: innerSize + this.padding.top + this.padding.bottom, width: 0, topOffset: 0, leftOffset: 0 };
+            } else {
+                return { width: innerSize + this.padding.left + this.padding.right, height: 0, topOffset: 0, leftOffset: 0 };
+            }
+
+        }
+    }
 
 }
